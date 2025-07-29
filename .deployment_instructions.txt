@@ -1,0 +1,26 @@
+Azure App Service Deployment Steps:
+
+1. Make sure your project has these files:
+   - requirements.txt
+   - runtime.txt
+   - startup.txt (startup command)
+   - app.py (main Flask app)
+
+2. Push your code to GitHub (or zip upload).
+
+3. Go to Azure Portal > App Service > Create new Web App:
+   - Runtime stack: Python 3.11
+   - Region: (choose closest)
+
+4. Deployment:
+   - Source: GitHub (or local zip)
+   - Build: Azure will auto-install requirements.txt
+   - Startup command: gunicorn app:app
+
+5. After deployment, your Flask app will be live on Azure URL.
+
+6. For static files, make sure 'static/' and 'templates/' folders are present.
+
+7. If you need environment variables, set them in App Service > Configuration.
+
+For any error, check App Service logs in Azure Portal.

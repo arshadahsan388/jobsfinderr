@@ -1,0 +1,351 @@
+<!-- base.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      property="og:image"
+      content="{{ url_for('static', filename='images/banner.png', _external=True) }}"
+    />
+    <meta
+      name="twitter:image"
+      content="{{ url_for('static', filename='images/banner.png', _external=True) }}"
+    />
+
+    <!-- SEO Meta Tags -->
+    {% block meta %} {% set meta_title = "Job Portal" %} {% set meta_description
+    = "Find government and private job listings in Pakistan. Apply online
+    easily." %} {% set meta_keywords = "Pakistan jobs, government jobs, private
+    jobs, remote jobs, job portal" %} {% endblock %}
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{{ meta_description }}" />
+    <meta name="keywords" content="{{ meta_keywords }}" />
+    <meta name="author" content="JobsFinderr" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph Meta -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ request.url }}" />
+    <meta property="og:title" content="{{ meta_title }}" />
+    <meta property="og:description" content="{{ meta_description }}" />
+    <meta
+      property="og:image"
+      content="{{ url_for('static', filename='images/seo-banner.jpg', _external=True) }}"
+    />
+
+    <!-- Twitter Card Meta -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="{{ request.url }}" />
+    <meta property="twitter:title" content="{{ meta_title }}" />
+    <meta property="twitter:description" content="{{ meta_description }}" />
+    <meta
+      property="twitter:image"
+      content="{{ url_for('static', filename='images/seo-banner.jpg', _external=True) }}"
+    />
+
+    <title>{% block title %}Job Portal{% endblock %}</title>
+
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='favicon.ico') }}"
+      type="image/x-icon"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Custom Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+                        :root {
+                    --bg-light: #f8f9fa;
+                    --text-light: #212529;
+                    --bg-dark: #121212;
+                    --text-dark: #e0e0e0;
+                    --card-light: #ffffff;
+                    --card-dark: #1f1f1f;
+                    --primary-gradient: linear-gradient(135deg, #4b6cb7, #182848);
+                  }
+
+                  /* === Base === */
+                  body {
+                    font-family: "Inter", sans-serif;
+                    background-color: var(--bg-light);
+                    color: var(--text-light);
+                    transition: background-color 0.3s, color 0.3s;
+                  }
+
+                  /* === Dark Mode Body === */
+                  body.dark-mode {
+                    background-color: var(--bg-dark);
+                    color: var(--text-dark);
+                  }
+
+                  /* === Navbar === */
+                  .navbar {
+                    background-color: var(--card-light);
+                    transition: background-color 0.3s;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+                  }
+
+                  body.dark-mode .navbar {
+                    background-color: var(--card-dark);
+                  }
+
+                  /* === Navbar Text === */
+                  .navbar-brand {
+                    font-weight: 700;
+                    font-size: 1.7rem;
+                  }
+
+                  .nav-link {
+                    color: inherit !important;
+                    font-weight: 500;
+                    transition: color 0.3s;
+                  }
+
+                  .nav-link:hover {
+                    color: #007bff !important;
+                    text-decoration: underline;
+                  }
+
+                  /* === Toggle Button === */
+                  .btn-toggle-mode {
+                    background: var(--primary-gradient);
+                    color: #fff;
+                    border: none;
+                    border-radius: 30px;
+                    padding: 6px 16px;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                  }
+
+                  .btn-toggle-mode:hover {
+                    transform: scale(1.05);
+                    background: linear-gradient(135deg, #182848, #4b6cb7);
+                  }
+
+                  /* === Main Layout === */
+                  .container,
+                  main.container {
+                    background-color: var(--card-light);
+                    transition: background-color 0.3s;
+                    padding: 30px;
+                    border-radius: 12px;
+                  }
+
+                  body.dark-mode .container,
+                  body.dark-mode main.container {
+                    background-color: var(--bg-dark);
+                    color: var(--text-dark);
+                  }
+
+                  /* === Card === */
+                  .card {
+                    background-color: var(--card-light);
+                    color: var(--text-light);
+                    transition: background-color 0.3s, color 0.3s;
+                  }
+
+                  body.dark-mode .card {
+                    background-color: var(--card-dark);
+                    color: var(--text-dark);
+                    border: 1px solid #2a2a2a;
+                  }
+
+                  body.dark-mode .card-title,
+                  body.dark-mode .card-text {
+                    color: var(--text-dark);
+                  }
+
+                  /* === Buttons === */
+                  .btn-primary {
+                    background-color: #6c63ff;
+                    border-color: #6c63ff;
+                    color: #fff;
+                  }
+
+                  body.dark-mode .btn-primary {
+                    background-color: #bb86fc;
+                    border-color: #bb86fc;
+                    color: #000;
+                  }
+
+                  body.dark-mode .btn-primary:hover {
+                    background-color: #a15ff0;
+                    border-color: #a15ff0;
+                  }
+
+                  /* === Forms === */
+                  input.form-control {
+                    transition: background-color 0.3s, color 0.3s;
+                  }
+
+                  body.dark-mode input.form-control {
+                    background-color: #2a2a2a;
+                    color: #ffffff;
+                    border: 1px solid #555;
+                  }
+                  body.dark-mode .list-group-item {
+        background-color: #2a2a2a;
+        color: #f0f0f0;
+        border-color: #444;
+      }
+
+                  body.dark-mode input.form-control::placeholder {
+                    color: #aaa;
+                  }
+
+                  /* === Spinner === */
+                  body.dark-mode .spinner-border {
+                    border-color: #bb86fc #000 #000 #000;
+                  }
+
+                  /* === Footer === */
+                  footer {
+                    background-color: #343a40;
+                    color: #ccc;
+                    padding: 30px 0;
+                    margin-top: 60px;
+                  }
+
+                  footer a {
+                    color: #bbb;
+                    margin: 0 15px;
+                    text-decoration: none;
+                  }
+
+                  footer a:hover {
+                    color: #fff;
+                    text-decoration: underline;
+                  }
+                  body.dark-mode .content-container {
+              background-color: #1e1e1e;
+              color: #f0f0f0;
+              border: 1px solid #333;
+            }
+
+                  /* === Responsive === */
+                  @media (max-width: 767px) {
+                    .btn-toggle-mode {
+                      width: 100%;
+                      margin-top: 10px;
+    </style>
+    <script>
+      function applySavedTheme() {
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "dark") {
+          document.body.classList.add("dark-mode");
+        } else {
+          document.body.classList.remove("dark-mode");
+        }
+      }
+    </script>
+  </head>
+  <body class="">
+    <nav class="navbar navbar-expand-lg sticky-top">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('home') }}">JobsFinderr</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarContent"
+          aria-controls="navbarContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div
+          class="collapse navbar-collapse justify-content-between"
+          id="navbarContent"
+        >
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/about">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/privacy-policy">Privacy Policy</a>
+            </li>
+          </ul>
+          <button
+            onclick="toggleDarkMode()"
+            id="darkModeToggle"
+            class="btn btn-toggle-mode ms-lg-3"
+          >
+            <span id="themeIcon">🌙</span>
+            <span id="themeText">Dark Mode</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container mt-4">
+      <div class="content-container">{% block content %}{% endblock %}</div>
+    </main>
+
+    <footer class="text-center">
+      <div class="container">
+        <p class="mb-2">&copy; 2025 JobFinder. All rights reserved.</p>
+        <div>
+          <a href="/about">About</a>
+          <a href="/contact">Contact</a>
+          <a href="/privacy-policy">Privacy Policy</a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Dark Mode Toggle Script -->
+    <script>
+      // Toggle dark mode manually via button
+      function toggleDarkMode() {
+        const isDark = document.body.classList.toggle("dark-mode");
+        localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
+
+        const icon = document.getElementById("themeIcon");
+        const text = document.getElementById("themeText");
+
+        if (icon && text) {
+          icon.textContent = isDark ? "☀️" : "🌙";
+          text.textContent = isDark ? "Light Mode" : "Dark Mode";
+        }
+      }
+
+      // Apply theme when page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        const isDark = localStorage.getItem("darkMode") === "enabled";
+
+        if (isDark) {
+          document.body.classList.add("dark-mode");
+        } else {
+          document.body.classList.remove("dark-mode");
+        }
+
+        const icon = document.getElementById("themeIcon");
+        const text = document.getElementById("themeText");
+
+        if (icon && text) {
+          icon.textContent = isDark ? "☀️" : "🌙";
+          text.textContent = isDark ? "Light Mode" : "Dark Mode";
+        }
+      });
+    </script>
+  </body>
+</html>

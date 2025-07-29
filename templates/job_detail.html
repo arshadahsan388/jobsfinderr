@@ -1,0 +1,79 @@
+{% extends "base.html" %} {% block title %}{{ job.title }} - Government Jobs in
+Pakistan{% endblock %} {% block meta %} {% set meta_title = "Latest Government
+Jobs in Pakistan - July 2025" %} {% set meta_description = "Explore government
+jobs updated daily. Smart AI-powered job search for every city in Pakistan." %}
+{% set meta_keywords = "govt jobs, karachi jobs, lahore jobs, remote, AI jobs"
+%} {% endblock %}{% block content %}
+<div class="p-4 p-sm-5 shadow rounded content-container">
+  <h1 class="h3 text-primary mb-4">{{ job.title }}</h1>
+
+  {% if job.images and job.images[0] %}
+  <img
+    src="{{ job.images[0] }}"
+    alt="Job Image"
+    class="img-fluid rounded mb-4"
+  />
+  {% endif %}
+  <div class="mb-4">
+    <p><strong>Company:</strong> {{ job.details['Department'] }}</p>
+
+    {% if job.enhanced_summary %}
+    <div class="mt-4">
+      <h5 class="text-primary border-bottom pb-2">
+        <i class="bi bi-lightbulb me-2"></i> Summary Written By Ahsan with ♥️
+      </h5>
+      <p class="mt-2">{{ job.enhanced_summary | safe }}</p>
+    </div>
+    {% endif %}
+
+    <p><strong>Location:</strong> {{ job.details['Location'] }}</p>
+    <p><strong>Posted In:</strong> {{ job.details['Newspaper'] }}</p>
+    <p><strong>Vacancies:</strong> {{ job.details['Total Vacancies'] }}</p>
+    <p><strong>Education:</strong> {{ job.details['Education'] }}</p>
+    <p><strong>Age Limit:</strong> {{ job.details['Age'] }}</p>
+    <p><strong>Gender:</strong> {{ job.details['Gender'] }}</p>
+    <p><strong>Experience:</strong> {{ job.details['Experience'] }}</p>
+    <p><strong>Salary:</strong> {{ job.details['Salary'] }}</p>
+    <p><strong>Job Type:</strong> {{ job.details['Job Type'] }}</p>
+    <p>
+      <strong>Last Date to Apply:</strong> {{ job.details['Last Date for Apply']
+      }}
+    </p>
+  </div>
+
+  <hr class="my-4" />
+
+  <div class="p-4 p-sm-5 shadow rounded content-container">
+    <h5 class="mb-3">Application Instructions</h5>
+    <ul class="list-group mb-4">
+      {% for instruction in job.instructions %}
+      <li class="list-group-item">{{ instruction }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="d-flex flex-column flex-sm-row gap-3">
+    {% if job.application_form %}
+    <a
+      href="{{ job.application_form }}"
+      target="_blank"
+      class="btn btn-primary w-100 w-sm-auto"
+    >
+      Apply Online
+    </a>
+    {% endif %}
+    <a href="{{ url_for('home') }}" class="btn btn-secondary w-100 w-sm-auto">
+      ← Back to All Jobs
+    </a>
+  </div>
+  {% if job.images and job.images|length > 1 %}
+  <div class="mt-5 text-center">
+    <img
+      src="{{ job.images[1] }}"
+      alt="Additional Job Image"
+      class="img-fluid rounded shadow"
+    />
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
