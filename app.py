@@ -129,10 +129,18 @@ def run_scripts():
     subprocess.run(["python", "enhance_jobs.py"])
 
 def scheduler_loop():
-    schedule.every(12).hours.do(run_scripts)
+    schedule.every(6).hours.do(run_scripts)  # 6 hours for production
     while True:
         schedule.run_pending()
-        time.sleep(60)
+        time.sleep(1)  # Check every second to avoid delay
+
+
+def run_scripts():
+    print("✅ Running scraping tasks at", datetime.now())
+    subprocess.run(["python", "jobs_data/scrape_jobs.py"])
+    subprocess.run(["python", "enhance_jobs.py"])
+
+
 
 if __name__ == "__main__":
     threading.Thread(target=scheduler_loop, daemon=True).start()

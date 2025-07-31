@@ -17,12 +17,12 @@ jobs updated daily. Smart AI-powered job search for every city in Pakistan." %}
   <div class="mb-4">
     <p><strong>Company:</strong> {{ job.details['Department'] }}</p>
 
-    {% if job.enhanced_summary %}
+    {% if job.summary %}
     <div class="mt-4">
       <h5 class="text-primary border-bottom pb-2">
         <i class="bi bi-lightbulb me-2"></i> Summary Written By Ahsan with ♥️
       </h5>
-      <p class="mt-2">{{ job.enhanced_summary | safe }}</p>
+      <p class="mt-2">{{ job.summary | safe }}</p>
     </div>
     {% endif %}
 

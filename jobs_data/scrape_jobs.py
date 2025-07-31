@@ -38,12 +38,45 @@ for i, url in enumerate(post_links):
     description = content_div.get_text(separator=" ", strip=True)[:300] + "..." if content_div else "No content"
 
     # Application form link
-    app_forms = soup.find_all("a")
+    # Application form link
+    # Application form link (flexible pattern match)
+    # Application form link (prioritize real job application buttons)
     app_form_link = None
+    app_forms = soup.find_all("a")
+
+    keywords = [
+        "apply now", "apply online", "online application", 
+        "online apply", "online apply form", "application form"
+    ]
+
     for link in app_forms:
-        if isinstance(link, Tag) and link.string and "Online Application Form" in link.string:
-            app_form_link = link.get("href")
-            break
+        if isinstance(link, Tag):
+            text = link.get_text(strip=True).lower()
+            href = link.get("href")
+
+            if not href or href.startswith("javascript"):
+                continue
+
+            if "wp-block-button__link" in link.get("class", []) or "button" in link.get("class", []):
+                if any(kw in text for kw in keywords):
+                    app_form_link = href
+                    break
+
+    if not app_form_link:
+        for link in app_forms:
+            if isinstance(link, Tag):
+                text = link.get_text(strip=True).lower()
+                href = link.get("href")
+
+                if not href or href.startswith("javascript") or "category/government" in href:
+                    continue
+
+                if any(kw in text for kw in keywords):
+                    app_form_link = href
+                    break
+
+
+
 
     # Instruction steps
     ol = soup.find("ol", class_="wp-block-list")
