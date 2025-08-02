@@ -138,7 +138,7 @@ def scheduler_loop():
 
 if __name__ == "__main__":
     # Start scheduler in background for production
-    if os.environ.get('DYNO'):  # Heroku environment
+    if os.environ.get('DYNO') or os.environ.get('RAILWAY_ENVIRONMENT'):  # Heroku or Railway environment
         threading.Thread(target=scheduler_loop, daemon=True).start()
         port = int(os.environ.get("PORT", 5000))
         app.run(host="0.0.0.0", port=port)
