@@ -124,7 +124,7 @@ def sitemap():
 
 
 def run_scripts():
-    print("⏱️ Running scraping tasks...")
+    print("✅ Running scraping tasks at", datetime.now())
     subprocess.run(["python", "jobs_data/scrape_jobs.py"])
     subprocess.run(["python", "enhance_jobs.py"])
 
@@ -135,14 +135,15 @@ def scheduler_loop():
         time.sleep(1)  # Check every second to avoid delay
 
 
-def run_scripts():
-    print("✅ Running scraping tasks at", datetime.now())
-    subprocess.run(["python", "jobs_data/scrape_jobs.py"])
-    subprocess.run(["python", "enhance_jobs.py"])
-
-
 
 if __name__ == "__main__":
-    threading.Thread(target=scheduler_loop, daemon=True).start()
-    app.run(debug=True)
+    # Start scheduler in background for production
+    if os.environ.get('DYNO'):  # Heroku environment
+        threading.Thread(target=scheduler_loop, daemon=True).start()
+        port = int(os.environ.get("PORT", 5000))
+        app.run(host="0.0.0.0", port=port)
+    else:
+        # Local development
+        threading.Thread(target=scheduler_loop, daemon=True).start()
+        app.run(debug=True)
     
