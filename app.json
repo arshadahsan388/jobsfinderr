@@ -1,0 +1,26 @@
+{
+  "name": "Flask Job Site",
+  "description": "A Flask-based job portal with automatic scraping and job enhancement",
+  "repository": "https://github.com/arshadahsan388/jobsfinderr",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["python", "flask", "jobs", "scraping", "heroku"],
+  "image": "heroku/python",
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "addons": [],
+  "env": {
+    "FLASK_ENV": {
+      "description": "Flask environment",
+      "value": "production"
+    }
+  }
+}
