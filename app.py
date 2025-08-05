@@ -71,6 +71,24 @@ def about():
 def contact():
     return render_template("contact.html")
 
+@app.route("/debug-scheduler")
+def debug_scheduler():
+    return f"""
+    <h2>Scheduler Status Debug</h2>
+    <p>Environment: {'Production (Heroku)' if os.environ.get('DYNO') else 'Development'}</p>
+    <p>Current Time: {datetime.now()}</p>
+    <p>DYNO Environment: {os.environ.get('DYNO', 'Not Set')}</p>
+    <p>Manual Scrape: <a href="/manual-scrape">/manual-scrape</a></p>
+    """
+
+@app.route("/manual-scrape")
+def manual_scrape():
+    try:
+        run_scripts()
+        return "✅ Manual scraping completed successfully!"
+    except Exception as e:
+        return f"❌ Error: {e}"
+
 @app.route("/privacy-policy")
 def privacy():
     return render_template("privacy_policy.html")
