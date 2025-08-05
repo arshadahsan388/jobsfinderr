@@ -10,7 +10,18 @@ import subprocess
 
 
 
+import atexit
+from apscheduler.schedulers.background import BackgroundScheduler
+
 app = Flask(__name__ ,static_folder='static')
+
+# Initialize scheduler for production
+def start_scheduler():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=run_scripts, trigger="interval", hours=6)
+    scheduler.start()
+    # Shut down the scheduler when exiting the app
+    atexit.register(lambda: scheduler.shutdown())
 
 # Load jobs from JSON file
 def load_jobs():
@@ -125,8 +136,17 @@ def sitemap():
 
 def run_scripts():
     print("✅ Running scraping tasks at", datetime.now())
-    subprocess.run(["python", "jobs_data/scrape_jobs.py"])
-    subprocess.run(["python", "enhance_jobs.py"])
+    try:
+        subprocess.run(["python", "jobs_data/scrape_jobs.py"], timeout=300)
+        subprocess.run(["python", "enhance_jobs.py"], timeout=300)
+        print("✅ Scraping completed successfully")
+    except Exception as e:
+        print(f"❌ Error in scraping: {e}")
+
+# Initialize scheduler when app starts
+if os.environ.get('DYNO'):  # Only in Heroku production
+    start_scheduler()
+    print("🚀 Scheduler started for production!")
 
 def scheduler_loop():
     schedule.every(6).hours.do(run_scripts)  # 6 hours for production
@@ -137,13 +157,11 @@ def scheduler_loop():
 
 
 if __name__ == "__main__":
-    # Start scheduler in background for production
-    if os.environ.get('DYNO') or os.environ.get('RAILWAY_ENVIRONMENT'):  # Heroku or Railway environment
-        threading.Thread(target=scheduler_loop, daemon=True).start()
-        port = int(os.environ.get("PORT", 5000))
-        app.run(host="0.0.0.0", port=port)
-    else:
-        # Local development
+    if not os.environ.get('DYNO'):  # Local development only
         threading.Thread(target=scheduler_loop, daemon=True).start()
         app.run(debug=True)
+    else:
+        # Production - Gunicorn handles the app, scheduler already started above
+        port = int(os.environ.get("PORT", 5000))
+        app.run(host="0.0.0.0", port=port)
     
