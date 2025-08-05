@@ -25,7 +25,7 @@ def start_scheduler():
 
 # Load jobs from JSON file
 def load_jobs():
-    with open("jobs_data/jobs.json", "r", encoding="utf-8") as file:
+    with open("jobs_enhanced.json", "r", encoding="utf-8") as file:
         return json.load(file)
 
 @app.route("/")
@@ -128,8 +128,8 @@ def sitemap():
         "lastmod": ten_days_ago,
     })
 
-    # ✅ Load all jobs from your existing function
-    jobs = load_jobs()  # This loads from jobs_data/jobs.json
+    # ✅ Load all jobs from enhanced JSON file
+    jobs = load_jobs()  # This now loads from jobs_enhanced.json
 
     for job in jobs:
         pages.append({
@@ -155,11 +155,20 @@ def sitemap():
 def run_scripts():
     print("✅ Running scraping tasks at", datetime.now())
     try:
-        subprocess.run(["python", "jobs_data/scrape_jobs.py"], timeout=300)
-        subprocess.run(["python", "enhance_jobs.py"], timeout=300)
-        print("✅ Scraping completed successfully")
+        # Use Python executable from environment for Heroku compatibility
+        python_cmd = "python"
+        if os.environ.get('DYNO'):  # In Heroku, use python directly
+            python_cmd = "python"
+        
+        subprocess.run([python_cmd, "jobs_data/scrape_jobs.py"], timeout=300, check=True)
+        subprocess.run([python_cmd, "enhance_jobs.py"], timeout=300, check=True)
+        print("✅ Scraping and enhancement completed successfully")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Script error: {e}")
+    except subprocess.TimeoutExpired:
+        print("❌ Script timeout after 5 minutes")
     except Exception as e:
-        print(f"❌ Error in scraping: {e}")
+        print(f"❌ Unexpected error in scraping: {e}")
 
 # Initialize scheduler when app starts
 if os.environ.get('DYNO'):  # Only in Heroku production
