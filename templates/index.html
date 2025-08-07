@@ -24,6 +24,21 @@
   <div class="loader-message">Loading amazing jobs for you...</div>
 </div>
 
+<script>
+// Hide loader instantly if user is returning from detail page
+(function() {
+  const scrollPosition = localStorage.getItem('jobsScrollPosition');
+  if (scrollPosition) {
+    const loader = document.getElementById("loader");
+    if (loader) {
+      loader.style.display = "none";
+      loader.style.visibility = "hidden";
+      loader.style.opacity = "0";
+    }
+  }
+})();
+</script>
+
   <!-- Search Bar -->
   <div class="row justify-content-center mb-4">
     <div class="col-md-6">
@@ -110,10 +125,8 @@
   function hideLoader() {
     const loader = document.getElementById("loader");
     
-    // Smooth fade out over 1.5 seconds
-    setTimeout(() => {
-      loader.classList.add("hidden");
-    }, 100); // Small delay to ensure everything is loaded
+    // Instant hide - no delay
+    loader.classList.add("hidden");
   }
 
   // Save scroll position when clicking on job
@@ -178,16 +191,41 @@
     document.body.classList.remove("dark-mode"); // 🧠 This line fixes it
   }
 
-  hideLoader();
-  
-  // Restore scroll position when returning from job detail
-  restoreScrollPosition();
+  // Check if user is returning from job detail page
+  const scrollPosition = localStorage.getItem('jobsScrollPosition');
+  if (scrollPosition) {
+    // User is returning from detail page - instantly hide loader
+    const loader = document.getElementById("loader");
+    if (loader) {
+      loader.style.display = "none"; // Instant hide - no animation
+    }
+    restoreScrollPosition();
+  } else {
+    // First time visit - show loading for only 1 second
+    setTimeout(() => {
+      hideLoader();
+    }, 1000);
+  }
   
   // Update time badges on load
   updateTimeBadges();
   
   // Update time badges every minute
   setInterval(updateTimeBadges, 60000);
+});
+
+// Also check on DOM ready for faster response
+document.addEventListener("DOMContentLoaded", function() {
+  const scrollPosition = localStorage.getItem('jobsScrollPosition');
+  if (scrollPosition) {
+    // User is returning - hide loader immediately
+    const loader = document.getElementById("loader");
+    if (loader) {
+      loader.style.display = "none";
+      loader.style.visibility = "hidden";
+      loader.style.opacity = "0";
+    }
+  }
 });
 
 </script>
