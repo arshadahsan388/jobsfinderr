@@ -5,14 +5,24 @@
 {% endblock %} {% block content %}
 
 
-<!-- Loading Spinner -->
+<!-- Beautiful Loading Animation -->
 <div id="loader" class="loader">
-  <div class="spinner-border" role="status">
-    <span class="visually-hidden">Loading...</span>
+  <div class="loader-text">JobsFinderr</div>
+  
+  <div class="loader-dots">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
   </div>
+  
+  <div class="loader-progress">
+    <div class="loader-progress-bar"></div>
+  </div>
+  
+  <div class="loader-message">Loading amazing jobs for you...</div>
 </div>
-
-
 
   <!-- Search Bar -->
   <div class="row justify-content-center mb-4">
@@ -99,7 +109,11 @@
 
   function hideLoader() {
     const loader = document.getElementById("loader");
-    loader.style.display = "none";
+    
+    // Smooth fade out over 1.5 seconds
+    setTimeout(() => {
+      loader.classList.add("hidden");
+    }, 100); // Small delay to ensure everything is loaded
   }
 
   // Save scroll position when clicking on job
