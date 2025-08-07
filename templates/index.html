@@ -6,7 +6,7 @@
 
 
 <!-- Beautiful Loading Animation -->
-<div id="loader" class="loader">
+<div id="loader" class="loader" style="display: none;">
   <div class="loader-text">JobsFinderr</div>
   
   <div class="loader-dots">
@@ -25,58 +25,143 @@
 </div>
 
 <script>
-// Hide loader instantly if user is returning from detail page
+// Immediately check if user is returning from detail page
 (function() {
   const scrollPosition = localStorage.getItem('jobsScrollPosition');
-  if (scrollPosition) {
+  const isReturning = scrollPosition !== null;
+  
+  if (isReturning) {
+    // User is returning - hide loader completely and restore position immediately
     const loader = document.getElementById("loader");
     if (loader) {
       loader.style.display = "none";
       loader.style.visibility = "hidden";
       loader.style.opacity = "0";
     }
+    
+    // Restore scroll position immediately
+    setTimeout(() => {
+      window.scrollTo(0, parseInt(scrollPosition));
+      localStorage.removeItem('jobsScrollPosition');
+    }, 50);
+  } else {
+    // First visit - show loader briefly
+    const loader = document.getElementById("loader");
+    if (loader) {
+      loader.style.display = "flex";
+      setTimeout(() => {
+        loader.classList.add("hidden");
+      }, 800);
+    }
   }
 })();
 </script>
 
-  <!-- Search Bar -->
-  <div class="row justify-content-center mb-4">
-    <div class="col-md-6">
-      <input
-        type="text"
-        id="jobSearch"
-        class="form-control"
-        placeholder="🔍 Search jobs..."
-        onkeyup="filterJobs()"
-      />
+  <!-- Enhanced Search and Filter Section -->
+  <div class="search-filter-container mb-4">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="search-box-wrapper">
+            <!-- Main Search Input -->
+            <div class="search-input-container">
+              <i class="search-icon">🔍</i>
+              <input
+                type="text"
+                id="jobSearch"
+                class="search-input"
+                placeholder="Search for jobs, departments, or positions..."
+                onkeyup="filterJobs()"
+              />
+              <button class="clear-search" id="clearSearch" onclick="clearSearch()" style="display: none;">
+                <i>✖</i>
+              </button>
+            </div>
+            
+            <!-- Filter Buttons and Sort Options -->
+            <div class="filter-sort-row">
+              <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterByType('all')" data-filter="all">
+                  <span class="filter-icon">📋</span>
+                  All Jobs
+                  <span class="job-count" id="allCount">{{ jobs|length }}</span>
+                </button>
+                <button class="filter-btn" onclick="filterByType('government')" data-filter="government">
+                  <span class="filter-icon">🏛️</span>
+                  Govt Jobs
+                  <span class="job-count" id="govCount">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterByType('private')" data-filter="private">
+                  <span class="filter-icon">🏢</span>
+                  Private Jobs
+                  <span class="job-count" id="privateCount">0</span>
+                </button>
+              </div>
+
+              <!-- Sort Options on same line -->
+              <div class="sort-options">
+                <label for="sortSelect">Sort by:</label>
+                <select id="sortSelect" class="sort-select" onchange="sortJobs()">
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="title">Job Title A-Z</option>
+                  <option value="department">Department A-Z</option>
+                  <option value="deadline">Application Deadline</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Job Cards -->
   <div class="row row-cols-1 row-cols-md-3 g-4" id="jobContainer">
     {% for job in jobs %}
-    <div class="col job-item">
+    <div class="col job-item" data-job-type="{{ job.details.get('Job Type', 'private').lower() }}" data-department="{{ job.details.get('Department', '') }}" data-deadline="{{ job.details.get('Last Date for Apply', '') }}" data-title="{{ job.title }}">
       <div class="card h-100 position-relative clickable-card" onclick="navigateToJob('{{ job.id }}')">
         <div class="card-body">
+          <!-- Job Type Badge inside card body - Only show if Job Type exists -->
+          {% if job.details.get('Job Type') %}
+          <div class="job-type-badge-inline">
+            {% if job.details.get('Job Type', '').lower() == 'government' %}
+              <span class="badge-govt">🏛️ Government</span>
+            {% elif job.details.get('Job Type', '').lower() == 'private' %}
+              <span class="badge-private">🏢 Private</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
           <h5 class="card-title title">{{ job.title }}</h5>
           {% if job.images and job.images[0] %}
-  <img src="{{ job.images[0] }}" alt="Job Image" class="img-fluid rounded mb-3" />
-{% endif %}
-          <p>
-            <strong>Last Date:</strong>
-            {{ job.details.get('Last Date for Apply', 'Not specified') }}
-          </p>
+          <img src="{{ job.images[0] }}" alt="Job Image" class="img-fluid rounded mb-3" />
+          {% endif %}
+          
+          <div class="job-details">
+            <p class="job-detail-item">
+              <strong><i>📅</i> Last Date:</strong>
+              <span class="deadline-text">{{ job.details.get('Last Date for Apply', 'Not specified') }}</span>
+            </p>
 
-          <p class="card-text">
-            <strong>Education:</strong> {{ job.details.get('Education', 'Not
-            specified') }}
-          </p>
+            <p class="job-detail-item">
+              <strong><i>🎓</i> Education:</strong> 
+              <span>{{ job.details.get('Education', 'Not specified') }}</span>
+            </p>
+
+            {% if job.details.get('Department') %}
+            <p class="job-detail-item">
+              <strong><i>🏢</i> Department:</strong>
+              <span class="department-text">{{ job.details.get('Department') }}</span>
+            </p>
+            {% endif %}
+          </div>
 
           <a
             href="{{ url_for('job_detail', job_id=job.id) }}"
-            class="btn btn-primary mt-2"
+            class="btn btn-primary mt-3"
             onclick="event.stopPropagation(); saveScrollPosition();"
-            >Apply</a
+            >Apply Now <i>→</i></a
           >
           
           {% if job.get('is_new') and job.get('added_at') %}
@@ -107,19 +192,116 @@
 
   function filterJobs() {
     const input = document.getElementById("jobSearch").value.toLowerCase();
+    const clearBtn = document.getElementById("clearSearch");
     const cards = document.querySelectorAll(".job-item");
+    const activeFilter = document.querySelector(".filter-btn.active").getAttribute("data-filter");
 
+    // Show/hide clear button
+    clearBtn.style.display = input ? "block" : "none";
+
+    let visibleCount = 0;
     cards.forEach((card) => {
-      const title =
-        card.querySelector(".title")?.textContent.toLowerCase() || "";
-      const desc = card.querySelector(".desc")?.textContent.toLowerCase() || "";
+      const title = card.querySelector(".title")?.textContent.toLowerCase() || "";
+      const dept = card.querySelector(".department-text")?.textContent.toLowerCase() || "";
+      const jobType = card.getAttribute("data-job-type");
+      
+      const matchesSearch = title.includes(input) || dept.includes(input);
+      const matchesFilter = activeFilter === "all" || jobType === activeFilter;
 
-      if (title.includes(input) || desc.includes(input)) {
+      if (matchesSearch && matchesFilter) {
         card.style.display = "block";
+        visibleCount++;
       } else {
         card.style.display = "none";
       }
     });
+
+    updateJobCounts();
+    showNoResultsMessage(visibleCount === 0);
+  }
+
+  function clearSearch() {
+    document.getElementById("jobSearch").value = "";
+    document.getElementById("clearSearch").style.display = "none";
+    filterJobs();
+  }
+
+  function filterByType(type) {
+    // Update active button
+    document.querySelectorAll(".filter-btn").forEach(btn => btn.classList.remove("active"));
+    document.querySelector(`[data-filter="${type}"]`).classList.add("active");
+    
+    filterJobs();
+  }
+
+  function sortJobs() {
+    const sortBy = document.getElementById("sortSelect").value;
+    const container = document.getElementById("jobContainer");
+    const cards = Array.from(container.querySelectorAll(".job-item"));
+
+    cards.sort((a, b) => {
+      switch(sortBy) {
+        case "title":
+          return a.getAttribute("data-title").localeCompare(b.getAttribute("data-title"));
+        case "department":
+          const deptA = a.getAttribute("data-department") || "";
+          const deptB = b.getAttribute("data-department") || "";
+          return deptA.localeCompare(deptB);
+        case "deadline":
+          const deadlineA = a.getAttribute("data-deadline") || "";
+          const deadlineB = b.getAttribute("data-deadline") || "";
+          return deadlineA.localeCompare(deadlineB);
+        case "oldest":
+          return 0; // Keep original order for oldest
+        case "newest":
+        default:
+          return 0; // Keep original order for newest (default)
+      }
+    });
+
+    if (sortBy === "oldest") {
+      cards.reverse();
+    }
+
+    // Re-append sorted cards
+    cards.forEach(card => container.appendChild(card));
+  }
+
+  function updateJobCounts() {
+    const allCards = document.querySelectorAll(".job-item");
+    const govCards = document.querySelectorAll('.job-item[data-job-type="government"]');
+    const privateCards = document.querySelectorAll('.job-item[data-job-type="private"]');
+    
+    const visibleAll = Array.from(allCards).filter(card => card.style.display !== "none").length;
+    const visibleGov = Array.from(govCards).filter(card => card.style.display !== "none").length;
+    const visiblePrivate = Array.from(privateCards).filter(card => card.style.display !== "none").length;
+
+    document.getElementById("allCount").textContent = visibleAll;
+    document.getElementById("govCount").textContent = visibleGov;
+    document.getElementById("privateCount").textContent = visiblePrivate;
+  }
+
+  function showNoResultsMessage(show) {
+    let noResultsMsg = document.getElementById("noResultsMessage");
+    
+    if (show && !noResultsMsg) {
+      noResultsMsg = document.createElement("div");
+      noResultsMsg.id = "noResultsMessage";
+      noResultsMsg.className = "no-results-message";
+      noResultsMsg.innerHTML = `
+        <div class="text-center py-5">
+          <div class="no-results-icon">🔍</div>
+          <h4>No jobs found</h4>
+          <p>Try adjusting your search or filter criteria</p>
+          <button class="btn btn-outline-primary" onclick="clearSearch(); filterByType('all');">
+            Show All Jobs
+          </button>
+        </div>
+      `;
+      document.getElementById("jobContainer").appendChild(noResultsMsg);
+    } else if (!show && noResultsMsg) {
+      noResultsMsg.remove();
+    }
   }
 
   function hideLoader() {
@@ -188,23 +370,22 @@
   if (savedTheme === "dark") {
     document.body.classList.add("dark-mode");
   } else {
-    document.body.classList.remove("dark-mode"); // 🧠 This line fixes it
+    document.body.classList.remove("dark-mode");
   }
 
   // Check if user is returning from job detail page
   const scrollPosition = localStorage.getItem('jobsScrollPosition');
   if (scrollPosition) {
-    // User is returning from detail page - instantly hide loader
+    // User is returning - no animation, just restore position
     const loader = document.getElementById("loader");
     if (loader) {
-      loader.style.display = "none"; // Instant hide - no animation
+      loader.style.display = "none";
     }
-    restoreScrollPosition();
   } else {
-    // First time visit - show loading for only 1 second
+    // First time visit - handle loader normally
     setTimeout(() => {
       hideLoader();
-    }, 1000);
+    }, 800);
   }
   
   // Update time badges on load
@@ -212,20 +393,9 @@
   
   // Update time badges every minute
   setInterval(updateTimeBadges, 60000);
-});
-
-// Also check on DOM ready for faster response
-document.addEventListener("DOMContentLoaded", function() {
-  const scrollPosition = localStorage.getItem('jobsScrollPosition');
-  if (scrollPosition) {
-    // User is returning - hide loader immediately
-    const loader = document.getElementById("loader");
-    if (loader) {
-      loader.style.display = "none";
-      loader.style.visibility = "hidden";
-      loader.style.opacity = "0";
-    }
-  }
+  
+  // Initialize job counts
+  updateJobCounts();
 });
 
 </script>
