@@ -1,0 +1,7 @@
+# Environment Variables for Heroku Deployment
+
+TELEGRAM_BOT_TOKEN=8366393794:AAH0ZKkoIzvDtBVfJa7woObbXaezhC_JBmU
+TELEGRAM_CHAT_ID=-4847462383
+
+# Optional: WhatsApp Webhook (if you want to use IFTTT later)
+WHATSAPP_WEBHOOK_URL=https://maker.ifttt.com/trigger/new_job_alert/with/key/your_key_here

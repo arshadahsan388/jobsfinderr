@@ -8,7 +8,8 @@ import time
 import threading
 import subprocess
 
-
+# Import WhatsApp automation
+from whatsapp_automation import send_new_job_notification
 
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -89,10 +90,130 @@ def manual_scrape():
     except Exception as e:
         return f"❌ Error: {e}"
 
+@app.route("/whatsapp-messages")
+def whatsapp_messages():
+    """View pending WhatsApp messages"""
+    try:
+        if os.path.exists("whatsapp_messages.json"):
+            with open("whatsapp_messages.json", "r", encoding="utf-8") as f:
+                messages = json.load(f)
+        else:
+            messages = []
+        
+        # Get recent unsent messages
+        recent_messages = [msg for msg in messages if not msg.get('sent', False)][-10:]
+        
+        html = """
+        <h2>📱 WhatsApp Job Notifications</h2>
+        <p>Click the links below to manually send job notifications to WhatsApp groups:</p>
+        """
+        
+        if not recent_messages:
+            html += "<p>✅ No pending messages</p>"
+        else:
+            for msg in recent_messages:
+                html += f"""
+                <div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px;">
+                    <h4>Job ID: {msg.get('id', 'N/A')}</h4>
+                    <pre style="white-space: pre-wrap; background: #f5f5f5; padding: 10px; border-radius: 4px;">{msg.get('message', 'N/A')}</pre>
+                    <p><strong>Created:</strong> {msg.get('created_at', 'N/A')}</p>
+                    <a href="{msg.get('whatsapp_link', '#')}" target="_blank" 
+                       style="background: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                       📱 Send to WhatsApp
+                    </a>
+                </div>
+                """
+        
+        html += f"""
+        <hr>
+        <p><a href="/">← Back to Jobs</a> | <a href="/debug-scheduler">Debug Scheduler</a></p>
+        <p><small>Last updated: {datetime.now()}</small></p>
+        """
+        
+        return html
+        
+    except Exception as e:
+        return f"❌ Error loading WhatsApp messages: {e}"
+
+@app.route("/test-telegram")
+def test_telegram():
+    """Test Telegram bot notification"""
+    try:
+        from telegram_bot import send_telegram_job_notification
+        
+        # Get a sample job from current data
+        jobs = load_jobs()
+        if jobs:
+            sample_job = jobs[0]  # Use first job as sample
+            success = send_telegram_job_notification(sample_job)
+            
+            if success:
+                return f"""
+                <h2>✅ Telegram Test Successful!</h2>
+                <p>Test notification sent for: <strong>{sample_job.get('title', 'N/A')}</strong></p>
+                <p>Check your Telegram channel/group for the message with WhatsApp share link!</p>
+                <p><a href="/test-whatsapp">Test WhatsApp</a> | <a href="/">← Back to Jobs</a></p>
+                """
+            else:
+                bot_token = os.environ.get('TELEGRAM_BOT_TOKEN', 'Not configured')
+                chat_id = os.environ.get('TELEGRAM_CHAT_ID', 'Not configured')
+                return f"""
+                <h2>❌ Telegram Test Failed</h2>
+                <p>Check configuration:</p>
+                <ul>
+                    <li><strong>Bot Token:</strong> {bot_token[:10]}... (hidden)</li>
+                    <li><strong>Chat ID:</strong> {chat_id}</li>
+                </ul>
+                <h3>Setup Instructions:</h3>
+                <ol>
+                    <li>Message <a href="https://t.me/BotFather" target="_blank">@BotFather</a></li>
+                    <li>Send: /newbot</li>
+                    <li>Follow instructions to get bot token</li>
+                    <li>Add bot to your channel/group</li>
+                    <li>Set environment variables in Heroku</li>
+                </ol>
+                <p><a href="/">← Back to Jobs</a></p>
+                """
+        else:
+            return "❌ No jobs available for testing"
+            
+    except Exception as e:
+        return f"❌ Error testing Telegram: {e}"
+
+@app.route("/test-whatsapp")
+def test_whatsapp():
+    """Test WhatsApp notification with sample job"""
+    try:
+        # Get a sample job from current data
+        jobs = load_jobs()
+        if jobs:
+            sample_job = jobs[0]  # Use first job as sample
+            success = send_new_job_notification(sample_job)
+            
+            if success:
+                return f"""
+                <h2>✅ WhatsApp Test Successful!</h2>
+                <p>Test notification sent for: <strong>{sample_job.get('title', 'N/A')}</strong></p>
+                <p><a href="/whatsapp-messages">View WhatsApp Messages</a></p>
+                <p><a href="/">← Back to Jobs</a></p>
+                """
+            else:
+                return f"""
+                <h2>❌ WhatsApp Test Failed</h2>
+                <p>Check the console logs for error details.</p>
+                <p><a href="/whatsapp-messages">View WhatsApp Messages</a></p>
+                <p><a href="/">← Back to Jobs</a></p>
+                """
+        else:
+            return "❌ No jobs available for testing"
+            
+    except Exception as e:
+        return f"❌ Error testing WhatsApp: {e}"
+
+
 @app.route("/privacy-policy")
 def privacy():
     return render_template("privacy_policy.html")
-
 
 from flask import send_from_directory
 import os
@@ -160,8 +281,48 @@ def run_scripts():
         if os.environ.get('DYNO'):  # In Heroku, use python directly
             python_cmd = "python"
         
+        # Load old jobs before scraping
+        old_jobs = set()
+        if os.path.exists("jobs_enhanced.json"):
+            with open("jobs_enhanced.json", "r", encoding="utf-8") as f:
+                old_data = json.load(f)
+                old_jobs = {job.get('id') for job in old_data if job.get('id')}
+        
+        # Run scraping scripts
         subprocess.run([python_cmd, "jobs_data/scrape_jobs.py"], timeout=300, check=True)
         subprocess.run([python_cmd, "enhance_jobs.py"], timeout=300, check=True)
+        
+        # Check for new jobs and send notifications
+        if os.path.exists("jobs_enhanced.json"):
+            with open("jobs_enhanced.json", "r", encoding="utf-8") as f:
+                new_data = json.load(f)
+                
+            new_jobs_count = 0
+            for job in new_data:
+                job_id = job.get('id')
+                if job_id and job_id not in old_jobs:
+                    # This is a new job - send notifications
+                    try:
+                        # WhatsApp notification (saves for manual sending)
+                        send_new_job_notification(job)
+                        
+                        # Telegram notification (automatic)
+                        from telegram_bot import send_telegram_job_notification
+                        telegram_success = send_telegram_job_notification(job)
+                        
+                        new_jobs_count += 1
+                        print(f"📱 WhatsApp prepared for: {job.get('title', 'Unknown')}")
+                        if telegram_success:
+                            print(f"📡 Telegram sent for: {job.get('title', 'Unknown')}")
+                            
+                    except Exception as e:
+                        print(f"❌ Notification failed for job {job_id}: {e}")
+            
+            if new_jobs_count > 0:
+                print(f"🎉 {new_jobs_count} new jobs found and notifications sent!")
+            else:
+                print("ℹ️ No new jobs found")
+        
         print("✅ Scraping and enhancement completed successfully")
     except subprocess.CalledProcessError as e:
         print(f"❌ Script error: {e}")
