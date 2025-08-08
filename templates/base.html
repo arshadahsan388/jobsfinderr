@@ -9,13 +9,26 @@
     ></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Canonical URL for SEO -->
+    <link rel="canonical" href="https://jobsfinderr.me{{ request.path }}" />
+
+    <!-- Open Graph and Twitter Meta -->
     <meta
       property="og:image"
-      content="{{ url_for('static', filename='images/banner.png', _external=True) }}"
+      content="https://jobsfinderr.me/static/banner.png"
     />
     <meta
       name="twitter:image"
-      content="{{ url_for('static', filename='images/banner.png', _external=True) }}"
+      content="https://jobsfinderr.me/static/banner.png"
+    />
+    <meta
+      property="og:url"
+      content="https://jobsfinderr.me{{ request.path }}"
+    />
+    <meta
+      name="twitter:url"
+      content="https://jobsfinderr.me{{ request.path }}"
     />
 
     <!-- SEO Meta Tags -->
@@ -842,13 +855,16 @@
     </style>
     <script>
       function applySavedTheme() {
-        const savedTheme = localStorage.getItem("theme");
-        if (savedTheme === "dark") {
+        const isDark = localStorage.getItem("darkMode") === "enabled";
+        if (isDark) {
           document.body.classList.add("dark-mode");
         } else {
           document.body.classList.remove("dark-mode");
         }
       }
+      
+      // Apply theme immediately to prevent flash
+      applySavedTheme();
     </script>
   </head>
   <body class="">
@@ -932,12 +948,14 @@
       document.addEventListener("DOMContentLoaded", () => {
         const isDark = localStorage.getItem("darkMode") === "enabled";
 
+        // Ensure the dark mode class is applied correctly
         if (isDark) {
           document.body.classList.add("dark-mode");
         } else {
           document.body.classList.remove("dark-mode");
         }
 
+        // Update button text and icon
         const icon = document.getElementById("themeIcon");
         const text = document.getElementById("themeText");
 

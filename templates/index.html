@@ -184,9 +184,9 @@
 
     // Save theme preference
     if (document.body.classList.contains("dark-mode")) {
-      localStorage.setItem("theme", "dark");
+      localStorage.setItem("darkMode", "enabled");
     } else {
-      localStorage.setItem("theme", "light");
+      localStorage.setItem("darkMode", "disabled");
     }
   }
 
@@ -366,8 +366,8 @@
 
   // Apply saved theme on load
   window.addEventListener("load", function () {
-  const savedTheme = localStorage.getItem("theme");
-  if (savedTheme === "dark") {
+  const isDark = localStorage.getItem("darkMode") === "enabled";
+  if (isDark) {
     document.body.classList.add("dark-mode");
   } else {
     document.body.classList.remove("dark-mode");

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, abort, url_for, Response
+from flask import Flask, render_template, jsonify, abort, url_for, Response, request, redirect
 import json
 import os
 from datetime import datetime
@@ -8,13 +8,47 @@ import time
 import threading
 import subprocess
 
-# Import WhatsApp automation
-from whatsapp_automation import send_new_job_notification
-
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__ ,static_folder='static')
+
+# Force HTTPS and handle www redirects
+@app.before_request
+def force_https():
+    """Force HTTPS and handle www subdomain redirects"""
+    # Skip redirects for local development
+    if request.host.startswith('127.0.0.1') or request.host.startswith('localhost'):
+        return
+    
+    # Force HTTPS
+    if not request.is_secure and not request.headers.get('X-Forwarded-Proto') == 'https':
+        return redirect(request.url.replace('http://', 'https://'), code=301)
+    
+    # Handle www redirect - redirect www to non-www
+    if request.host.startswith('www.'):
+        non_www_url = request.url.replace('www.', '', 1)
+        return redirect(non_www_url, code=301)
+    
+    # Handle jobsfinderr-app.herokuapp.com to jobsfinderr.me redirect
+    if 'jobsfinderr-app.herokuapp.com' in request.host:
+        new_url = request.url.replace('jobsfinderr-app.herokuapp.com', 'jobsfinderr.me')
+        return redirect(new_url, code=301)
+
+@app.after_request
+def add_security_headers(response):
+    """Add security headers for HTTPS and SEO"""
+    # HTTPS Security Headers
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    
+    # Cache Control for better performance
+    if request.endpoint == 'static':
+        response.headers['Cache-Control'] = 'public, max-age=86400'  # 1 day for static files
+    
+    return response
 
 # Initialize scheduler for production
 def start_scheduler():
@@ -90,51 +124,6 @@ def manual_scrape():
     except Exception as e:
         return f"❌ Error: {e}"
 
-@app.route("/whatsapp-messages")
-def whatsapp_messages():
-    """View pending WhatsApp messages"""
-    try:
-        if os.path.exists("whatsapp_messages.json"):
-            with open("whatsapp_messages.json", "r", encoding="utf-8") as f:
-                messages = json.load(f)
-        else:
-            messages = []
-        
-        # Get recent unsent messages
-        recent_messages = [msg for msg in messages if not msg.get('sent', False)][-10:]
-        
-        html = """
-        <h2>📱 WhatsApp Job Notifications</h2>
-        <p>Click the links below to manually send job notifications to WhatsApp groups:</p>
-        """
-        
-        if not recent_messages:
-            html += "<p>✅ No pending messages</p>"
-        else:
-            for msg in recent_messages:
-                html += f"""
-                <div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px;">
-                    <h4>Job ID: {msg.get('id', 'N/A')}</h4>
-                    <pre style="white-space: pre-wrap; background: #f5f5f5; padding: 10px; border-radius: 4px;">{msg.get('message', 'N/A')}</pre>
-                    <p><strong>Created:</strong> {msg.get('created_at', 'N/A')}</p>
-                    <a href="{msg.get('whatsapp_link', '#')}" target="_blank" 
-                       style="background: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-                       📱 Send to WhatsApp
-                    </a>
-                </div>
-                """
-        
-        html += f"""
-        <hr>
-        <p><a href="/">← Back to Jobs</a> | <a href="/debug-scheduler">Debug Scheduler</a></p>
-        <p><small>Last updated: {datetime.now()}</small></p>
-        """
-        
-        return html
-        
-    except Exception as e:
-        return f"❌ Error loading WhatsApp messages: {e}"
-
 @app.route("/test-telegram")
 def test_telegram():
     """Test Telegram bot notification"""
@@ -151,8 +140,8 @@ def test_telegram():
                 return f"""
                 <h2>✅ Telegram Test Successful!</h2>
                 <p>Test notification sent for: <strong>{sample_job.get('title', 'N/A')}</strong></p>
-                <p>Check your Telegram channel/group for the message with WhatsApp share link!</p>
-                <p><a href="/test-whatsapp">Test WhatsApp</a> | <a href="/">← Back to Jobs</a></p>
+                <p>Check your Telegram channel/group for the message!</p>
+                <p><a href="/">← Back to Jobs</a></p>
                 """
             else:
                 bot_token = os.environ.get('TELEGRAM_BOT_TOKEN', 'Not configured')
@@ -180,37 +169,6 @@ def test_telegram():
     except Exception as e:
         return f"❌ Error testing Telegram: {e}"
 
-@app.route("/test-whatsapp")
-def test_whatsapp():
-    """Test WhatsApp notification with sample job"""
-    try:
-        # Get a sample job from current data
-        jobs = load_jobs()
-        if jobs:
-            sample_job = jobs[0]  # Use first job as sample
-            success = send_new_job_notification(sample_job)
-            
-            if success:
-                return f"""
-                <h2>✅ WhatsApp Test Successful!</h2>
-                <p>Test notification sent for: <strong>{sample_job.get('title', 'N/A')}</strong></p>
-                <p><a href="/whatsapp-messages">View WhatsApp Messages</a></p>
-                <p><a href="/">← Back to Jobs</a></p>
-                """
-            else:
-                return f"""
-                <h2>❌ WhatsApp Test Failed</h2>
-                <p>Check the console logs for error details.</p>
-                <p><a href="/whatsapp-messages">View WhatsApp Messages</a></p>
-                <p><a href="/">← Back to Jobs</a></p>
-                """
-        else:
-            return "❌ No jobs available for testing"
-            
-    except Exception as e:
-        return f"❌ Error testing WhatsApp: {e}"
-
-
 @app.route("/privacy-policy")
 def privacy():
     return render_template("privacy_policy.html")
@@ -231,31 +189,38 @@ def sitemap():
 
     ten_days_ago = datetime.now().date().isoformat()
 
-    # Static URLs
+    # Static URLs - force HTTPS and correct domain
+    base_url = "https://jobsfinderr.me"
+    
     pages.append({
-        "loc": url_for("home", _external=True),
+        "loc": f"{base_url}/",
         "lastmod": ten_days_ago,
+        "priority": "1.0"
     })
     pages.append({
-        "loc": url_for("about", _external=True),
+        "loc": f"{base_url}/about",
         "lastmod": ten_days_ago,
+        "priority": "0.8"
     })
     pages.append({
-        "loc": url_for("contact", _external=True),
+        "loc": f"{base_url}/contact",
         "lastmod": ten_days_ago,
+        "priority": "0.8"
     })
     pages.append({
-        "loc": url_for("privacy", _external=True),
+        "loc": f"{base_url}/privacy-policy",
         "lastmod": ten_days_ago,
+        "priority": "0.6"
     })
 
-    # ✅ Load all jobs from enhanced JSON file
-    jobs = load_jobs()  # This now loads from jobs_enhanced.json
+    # Load all jobs from enhanced JSON file
+    jobs = load_jobs()
 
     for job in jobs:
         pages.append({
-            "loc": url_for("job_detail", job_id=job['id'], _external=True),
+            "loc": f"{base_url}/job/{job['id']}",
             "lastmod": ten_days_ago,
+            "priority": "0.9"
         })
 
     # XML generation
@@ -266,10 +231,12 @@ def sitemap():
         ET.SubElement(url, 'loc').text = page["loc"]
         ET.SubElement(url, 'lastmod').text = page["lastmod"]
         ET.SubElement(url, 'changefreq').text = "weekly"
-        ET.SubElement(url, 'priority').text = "0.8"
+        ET.SubElement(url, 'priority').text = page.get("priority", "0.8")
 
     sitemap_xml = ET.tostring(xml, encoding="utf-8", method="xml")
-    return Response(sitemap_xml, mimetype='application/xml')
+    response = Response(sitemap_xml, mimetype='application/xml')
+    response.headers['Cache-Control'] = 'public, max-age=86400'  # Cache for 1 day
+    return response
 
 
 
@@ -301,19 +268,17 @@ def run_scripts():
             for job in new_data:
                 job_id = job.get('id')
                 if job_id and job_id not in old_jobs:
-                    # This is a new job - send notifications
+                    # This is a new job - send Telegram notification
                     try:
-                        # WhatsApp notification (saves for manual sending)
-                        send_new_job_notification(job)
-                        
                         # Telegram notification (automatic)
                         from telegram_bot import send_telegram_job_notification
                         telegram_success = send_telegram_job_notification(job)
                         
                         new_jobs_count += 1
-                        print(f"📱 WhatsApp prepared for: {job.get('title', 'Unknown')}")
                         if telegram_success:
-                            print(f"📡 Telegram sent for: {job.get('title', 'Unknown')}")
+                            print(f"� Telegram sent for: {job.get('title', 'Unknown')}")
+                        else:
+                            print(f"❌ Telegram failed for: {job.get('title', 'Unknown')}")
                             
                     except Exception as e:
                         print(f"❌ Notification failed for job {job_id}: {e}")
