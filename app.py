@@ -169,9 +169,191 @@ def test_telegram():
     except Exception as e:
         return f"❌ Error testing Telegram: {e}"
 
+@app.route("/test-facebook")
+def test_facebook():
+    """Test Facebook posting functionality"""
+    try:
+        from facebook_poster import send_facebook_job_notification
+        
+        # Get a sample job from current data
+        jobs = load_jobs()
+        if jobs:
+            sample_job = jobs[0]  # Use first job as sample
+            success = send_facebook_job_notification(sample_job)
+            
+            if success:
+                return f"""
+                <h2>✅ Facebook Test Successful!</h2>
+                <p>Test post created for: <strong>{sample_job.get('title', 'N/A')}</strong></p>
+                <p>Check your Facebook page for the post!</p>
+                <p><a href="/">← Back to Jobs</a></p>
+                """
+            else:
+                page_token = os.environ.get('FACEBOOK_PAGE_ACCESS_TOKEN', 'Not configured')
+                page_id = os.environ.get('FACEBOOK_PAGE_ID', 'Not configured')
+                return f"""
+                <h2>❌ Facebook Test Failed</h2>
+                <p>Check configuration:</p>
+                <ul>
+                    <li><strong>Page Access Token:</strong> {page_token[:10] if page_token != 'Not configured' else 'Not configured'}... (hidden)</li>
+                    <li><strong>Page ID:</strong> {page_id}</li>
+                </ul>
+                <h3>Setup Instructions:</h3>
+                <ol>
+                    <li>Go to <a href="https://developers.facebook.com/" target="_blank">Facebook Developers</a></li>
+                    <li>Create an app and get Page Access Token</li>
+                    <li>Add page_posts, pages_manage_posts permissions</li>
+                    <li>Get your Page ID from Facebook page settings</li>
+                    <li>Set environment variables in Heroku</li>
+                </ol>
+                <p><a href="/">← Back to Jobs</a></p>
+                """
+        else:
+            return "❌ No jobs available for testing"
+            
+    except Exception as e:
+        return f"❌ Error testing Facebook: {e}"
+
+@app.route("/test-analytics")
+def test_analytics():
+    """Test Google Analytics 4 tracking functionality"""
+    return f"""
+    <h2>🔬 Google Analytics 4 Test Page</h2>
+    <p>Use this page to test your GA4 tracking implementation.</p>
+    
+    <div style="margin: 20px 0;">
+        <h3>Test Events:</h3>
+        <button onclick="testJobSearch()" style="margin: 5px; padding: 10px;">Test Job Search</button>
+        <button onclick="testJobFilter()" style="margin: 5px; padding: 10px;">Test Job Filter</button>
+        <button onclick="testJobView()" style="margin: 5px; padding: 10px;">Test Job View</button>
+        <button onclick="testJobApply()" style="margin: 5px; padding: 10px;">Test Job Apply</button>
+    </div>
+    
+    <div style="margin: 20px 0;">
+        <h3>Check Results:</h3>
+        <ol>
+            <li>Open <a href="https://analytics.google.com/" target="_blank">Google Analytics</a></li>
+            <li>Go to Reports → Realtime → Events</li>
+            <li>Click buttons above and watch events appear</li>
+            <li>Events should appear within 30 seconds</li>
+        </ol>
+    </div>
+    
+    <div style="margin: 20px 0;">
+        <h3>Setup Status:</h3>
+        <p id="gaStatus">Checking GA4 status...</p>
+    </div>
+    
+    <script>
+        // Test functions
+        function testJobSearch() {{
+            if (typeof gtag !== 'undefined') {{
+                gtag('event', 'search', {{
+                    search_term: 'test government jobs',
+                    event_category: 'Job Search',
+                    event_label: 'Test Search'
+                }});
+                alert('✅ Search event sent to GA4!');
+            }} else {{
+                alert('❌ GA4 not loaded!');
+            }}
+        }}
+        
+        function testJobFilter() {{
+            if (typeof gtag !== 'undefined') {{
+                gtag('event', 'filter_jobs', {{
+                    filter_type: 'government',
+                    event_category: 'Job Filter',
+                    event_label: 'Test Filter'
+                }});
+                alert('✅ Filter event sent to GA4!');
+            }} else {{
+                alert('❌ GA4 not loaded!');
+            }}
+        }}
+        
+        function testJobView() {{
+            if (typeof gtag !== 'undefined') {{
+                gtag('event', 'view_item', {{
+                    item_id: 'test_job_123',
+                    item_name: 'Test Government Job',
+                    item_category: 'government',
+                    event_category: 'Job Engagement'
+                }});
+                alert('✅ Job view event sent to GA4!');
+            }} else {{
+                alert('❌ GA4 not loaded!');
+            }}
+        }}
+        
+        function testJobApply() {{
+            if (typeof gtag !== 'undefined') {{
+                gtag('event', 'select_item', {{
+                    item_id: 'test_job_123',
+                    item_name: 'Test Government Job',
+                    item_category: 'government',
+                    event_category: 'Job Application'
+                }});
+                alert('✅ Job apply event sent to GA4!');
+            }} else {{
+                alert('❌ GA4 not loaded!');
+            }}
+        }}
+        
+        // Check GA4 status
+        window.addEventListener('load', function() {{
+            const statusEl = document.getElementById('gaStatus');
+            if (typeof gtag !== 'undefined' && typeof ga !== 'undefined' || typeof gtag !== 'undefined') {{
+                statusEl.innerHTML = '✅ GA4 is loaded and ready!';
+                statusEl.style.color = 'green';
+            }} else {{
+                statusEl.innerHTML = '❌ GA4 not detected. Check your Measurement ID in base.html';
+                statusEl.style.color = 'red';
+            }}
+        }});
+    </script>
+    
+    <p><a href="/">← Back to Jobs</a></p>
+    """
+
 @app.route("/privacy-policy")
 def privacy():
     return render_template("privacy_policy.html")
+
+# SEO-Friendly Category Pages
+@app.route("/government-jobs")
+def government_jobs():
+    jobs = load_jobs()
+    gov_jobs = [job for job in jobs if job.get('details', {}).get('Job Type', '').lower() == 'government']
+    return render_template("category_jobs.html", 
+                         jobs=gov_jobs, 
+                         category="Government Jobs", 
+                         description="Find latest government job opportunities in Pakistan. Apply for govt positions in federal and provincial departments.",
+                         keywords="government jobs pakistan, govt jobs, federal jobs, provincial jobs")
+
+@app.route("/private-jobs")
+def private_jobs():
+    jobs = load_jobs()
+    private_jobs = [job for job in jobs if job.get('details', {}).get('Job Type', '').lower() == 'private']
+    return render_template("category_jobs.html", 
+                         jobs=private_jobs, 
+                         category="Private Sector Jobs", 
+                         description="Explore private sector job opportunities in Pakistan. Find positions in multinational companies and private organizations.",
+                         keywords="private jobs pakistan, private sector, multinational companies, corporate jobs")
+
+# City-specific job pages for local SEO
+@app.route("/jobs/<city>")
+def city_jobs(city):
+    jobs = load_jobs()
+    # Filter jobs that mention the city in location
+    city_jobs = [job for job in jobs if city.lower() in job.get('details', {}).get('Location', '').lower()]
+    
+    city_name = city.title()
+    return render_template("city_jobs.html", 
+                         jobs=city_jobs, 
+                         city=city_name,
+                         description=f"Find latest job opportunities in {city_name}, Pakistan. Government and private sector positions available.",
+                         keywords=f"{city.lower()} jobs, jobs in {city.lower()}, {city.lower()} employment, {city.lower()} careers")
 
 from flask import send_from_directory
 import os
@@ -192,31 +374,56 @@ def sitemap():
     # Static URLs - force HTTPS and correct domain
     base_url = "https://jobsfinderr.me"
     
+    # Homepage - highest priority
     pages.append({
         "loc": f"{base_url}/",
         "lastmod": ten_days_ago,
         "priority": "1.0"
     })
+    
+    # Important category pages
+    pages.append({
+        "loc": f"{base_url}/government-jobs",
+        "lastmod": ten_days_ago,
+        "priority": "0.9"
+    })
+    pages.append({
+        "loc": f"{base_url}/private-jobs",
+        "lastmod": ten_days_ago,
+        "priority": "0.9"
+    })
+    
+    # City-specific pages for local SEO
+    major_cities = ["karachi", "lahore", "islamabad", "rawalpindi", "faisalabad", "multan", "hyderabad", "peshawar", "quetta"]
+    for city in major_cities:
+        pages.append({
+            "loc": f"{base_url}/jobs/{city}",
+            "lastmod": ten_days_ago,
+            "priority": "0.8"
+        })
+    
+    # Static pages
     pages.append({
         "loc": f"{base_url}/about",
         "lastmod": ten_days_ago,
-        "priority": "0.8"
+        "priority": "0.7"
     })
     pages.append({
         "loc": f"{base_url}/contact",
         "lastmod": ten_days_ago,
-        "priority": "0.8"
+        "priority": "0.7"
     })
     pages.append({
         "loc": f"{base_url}/privacy-policy",
         "lastmod": ten_days_ago,
-        "priority": "0.6"
+        "priority": "0.5"
     })
 
     # Load all jobs from enhanced JSON file
     jobs = load_jobs()
 
     for job in jobs:
+        # Individual job pages - high priority for fresh content
         pages.append({
             "loc": f"{base_url}/job/{job['id']}",
             "lastmod": ten_days_ago,
@@ -230,7 +437,7 @@ def sitemap():
         url = ET.SubElement(xml, 'url')
         ET.SubElement(url, 'loc').text = page["loc"]
         ET.SubElement(url, 'lastmod').text = page["lastmod"]
-        ET.SubElement(url, 'changefreq').text = "weekly"
+        ET.SubElement(url, 'changefreq').text = "daily" if "job/" in page["loc"] else "weekly"
         ET.SubElement(url, 'priority').text = page.get("priority", "0.8")
 
     sitemap_xml = ET.tostring(xml, encoding="utf-8", method="xml")
@@ -268,17 +475,28 @@ def run_scripts():
             for job in new_data:
                 job_id = job.get('id')
                 if job_id and job_id not in old_jobs:
-                    # This is a new job - send Telegram notification
+                    # This is a new job - send notifications to both Telegram and Facebook
                     try:
                         # Telegram notification (automatic)
                         from telegram_bot import send_telegram_job_notification
                         telegram_success = send_telegram_job_notification(job)
                         
+                        # Facebook page posting (automatic)
+                        from facebook_poster import send_facebook_job_notification
+                        facebook_success = send_facebook_job_notification(job)
+                        
                         new_jobs_count += 1
+                        
+                        # Log results for both platforms
                         if telegram_success:
-                            print(f"� Telegram sent for: {job.get('title', 'Unknown')}")
+                            print(f"✅ Telegram sent for: {job.get('title', 'Unknown')}")
                         else:
                             print(f"❌ Telegram failed for: {job.get('title', 'Unknown')}")
+                        
+                        if facebook_success:
+                            print(f"✅ Facebook posted for: {job.get('title', 'Unknown')}")
+                        else:
+                            print(f"❌ Facebook failed for: {job.get('title', 'Unknown')}")
                             
                     except Exception as e:
                         print(f"❌ Notification failed for job {job_id}: {e}")

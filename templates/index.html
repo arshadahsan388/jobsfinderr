@@ -1,8 +1,8 @@
 {% extends "base.html" %} {% block meta %}
-  {% set meta_title = "Latest Government Jobs in Pakistan - July 2025" %}
-  {% set meta_description = "Explore government jobs updated daily. Smart AI-powered job search for every city in Pakistan." %}
-  {% set meta_keywords = "govt jobs, karachi jobs, lahore jobs, remote, AI jobs" %}
-{% endblock %} {% block content %}
+  {% set meta_title = "Pakistan Jobs 2025 - Latest Government & Private Jobs | JobsFindeRR" %}
+  {% set meta_description = "Find 1000+ latest government & private jobs in Pakistan 2025. Search jobs in Karachi, Lahore, Islamabad. Free job alerts. Apply online today!" %}
+  {% set meta_keywords = "pakistan jobs 2025, government jobs pakistan, private jobs pakistan, latest jobs, govt jobs, karachi jobs, lahore jobs, islamabad jobs, online jobs pakistan, job portal pakistan, remote jobs" %}
+{% endblock %} {% block title %}Pakistan Jobs 2025 - Government & Private Job Portal | JobsFindeRR{% endblock %} {% block content %}
 
 
 <!-- Beautiful Loading Animation -->
@@ -56,6 +56,66 @@
   }
 })();
 </script>
+
+<!-- SEO Hero Section -->
+<div class="seo-hero-section bg-light py-4 mb-4">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h1 class="display-5 fw-bold text-primary mb-3">Latest Pakistan Jobs 2025 - Government & Private Sector</h1>
+        <p class="lead text-muted mb-4">
+          Discover 1000+ government and private job opportunities across Pakistan. 
+          Search jobs in Karachi, Lahore, Islamabad and all major cities. Apply online today!
+        </p>
+        
+        <!-- Key Features -->
+        <div class="row justify-content-center mb-4">
+          <div class="col-md-8">
+            <div class="row text-center">
+              <div class="col-6 col-md-3 mb-2">
+                <div class="feature-item">
+                  <i style="font-size: 1.5rem;">🏛️</i>
+                  <small class="d-block text-muted">Government Jobs</small>
+                </div>
+              </div>
+              <div class="col-6 col-md-3 mb-2">
+                <div class="feature-item">
+                  <i style="font-size: 1.5rem;">🏢</i>
+                  <small class="d-block text-muted">Private Sector</small>
+                </div>
+              </div>
+              <div class="col-6 col-md-3 mb-2">
+                <div class="feature-item">
+                  <i style="font-size: 1.5rem;">🌐</i>
+                  <small class="d-block text-muted">All Cities</small>
+                </div>
+              </div>
+              <div class="col-6 col-md-3 mb-2">
+                <div class="feature-item">
+                  <i style="font-size: 1.5rem;">⚡</i>
+                  <small class="d-block text-muted">Daily Updates</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Popular Search Tags -->
+        <div class="popular-searches">
+          <p class="small text-muted mb-2">Popular Searches:</p>
+          <div class="d-flex flex-wrap justify-content-center gap-2">
+            <span class="badge bg-light text-dark border">Government Jobs Pakistan</span>
+            <span class="badge bg-light text-dark border">Karachi Jobs</span>
+            <span class="badge bg-light text-dark border">Lahore Jobs</span>
+            <span class="badge bg-light text-dark border">Health Department</span>
+            <span class="badge bg-light text-dark border">Education Jobs</span>
+            <span class="badge bg-light text-dark border">Police Jobs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
   <!-- Enhanced Search and Filter Section -->
   <div class="search-filter-container mb-4">
@@ -160,7 +220,7 @@
           <a
             href="{{ url_for('job_detail', job_id=job.id) }}"
             class="btn btn-primary mt-3"
-            onclick="event.stopPropagation(); saveScrollPosition();"
+            onclick="event.stopPropagation(); saveScrollPosition(); trackApplyClick(this, '{{ job.id }}');"
             >Apply Now <i>→</i></a
           >
           
@@ -180,13 +240,26 @@
 </div>
 <script>
   function toggleDarkMode() {
+    const wasDark = document.body.classList.contains("dark-mode");
     document.body.classList.toggle("dark-mode");
 
     // Save theme preference
-    if (document.body.classList.contains("dark-mode")) {
-      localStorage.setItem("darkMode", "enabled");
-    } else {
-      localStorage.setItem("darkMode", "disabled");
+    const isDark = document.body.classList.contains("dark-mode");
+    localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
+    
+    // Track theme toggle in GA4
+    if (typeof trackThemeToggle === 'function') {
+      trackThemeToggle(isDark ? 'dark' : 'light');
+    }
+  }
+
+  // Track Apply Now button clicks
+  function trackApplyClick(element, jobId) {
+    const jobCard = element.closest('.job-item');
+    if (jobCard && typeof trackJobApply === 'function') {
+      const jobTitle = jobCard.querySelector('.title')?.textContent || 'Unknown Job';
+      const jobType = jobCard.getAttribute('data-job-type') || 'unknown';
+      trackJobApply(jobId, jobTitle, jobType);
     }
   }
 
@@ -195,6 +268,11 @@
     const clearBtn = document.getElementById("clearSearch");
     const cards = document.querySelectorAll(".job-item");
     const activeFilter = document.querySelector(".filter-btn.active").getAttribute("data-filter");
+
+    // Track search in GA4 (only if there's actual search text)
+    if (input.length > 2 && typeof trackJobSearch === 'function') {
+      trackJobSearch(input);
+    }
 
     // Show/hide clear button
     clearBtn.style.display = input ? "block" : "none";
@@ -227,6 +305,11 @@
   }
 
   function filterByType(type) {
+    // Track filter usage in GA4
+    if (typeof trackJobFilter === 'function') {
+      trackJobFilter(type);
+    }
+    
     // Update active button
     document.querySelectorAll(".filter-btn").forEach(btn => btn.classList.remove("active"));
     document.querySelector(`[data-filter="${type}"]`).classList.add("active");
@@ -236,6 +319,12 @@
 
   function sortJobs() {
     const sortBy = document.getElementById("sortSelect").value;
+    
+    // Track sort usage in GA4
+    if (typeof trackJobSort === 'function') {
+      trackJobSort(sortBy);
+    }
+    
     const container = document.getElementById("jobContainer");
     const cards = Array.from(container.querySelectorAll(".job-item"));
 
@@ -318,6 +407,19 @@
 
   // Navigate to job detail when card is clicked
   function navigateToJob(jobId) {
+    // Get job details for tracking
+    const jobCard = document.querySelector(`[onclick="navigateToJob('${jobId}')"]`);
+    if (jobCard) {
+      const jobTitle = jobCard.querySelector('.title')?.textContent || 'Unknown Job';
+      const jobTypeElement = jobCard.closest('.job-item');
+      const jobType = jobTypeElement?.getAttribute('data-job-type') || 'unknown';
+      
+      // Track job view in GA4
+      if (typeof trackJobView === 'function') {
+        trackJobView(jobId, jobTitle, jobType);
+      }
+    }
+    
     saveScrollPosition();
     window.location.href = `/job/${jobId}`;
   }

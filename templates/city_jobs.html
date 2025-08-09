@@ -1,0 +1,308 @@
+{% extends "base.html" %} {% block meta %} {% set meta_title = "Jobs in " + city
++ " Pakistan 2025 | JobsFindeRR" %} {% set meta_description = description %} {%
+set meta_keywords = keywords %} {% endblock %} {% block title %}Jobs in {{ city
+}} Pakistan 2025 | JobsFindeRR{% endblock %} {% block content %}
+<div class="container py-4">
+  <!-- SEO Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="bg-light rounded-4 p-4 text-center">
+        <h1 class="display-6 fw-bold text-primary mb-3">
+          Jobs in {{ city }}, Pakistan 2025
+        </h1>
+        <p class="lead text-muted mb-0">{{ description }}</p>
+        <div class="mt-3">
+          <span class="badge bg-primary">{{ jobs|length }} Jobs Available</span>
+          <span class="badge bg-success">Updated Daily</span>
+          <span class="badge bg-info">Apply Online</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/">Home</a></li>
+      <li class="breadcrumb-item"><a href="/">All Jobs</a></li>
+      <li class="breadcrumb-item active">{{ city }}</li>
+    </ol>
+  </nav>
+
+  <!-- Jobs Count and Filter Info -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0">{{ jobs|length }} Jobs Found in {{ city }}</h2>
+        <a href="/" class="btn btn-outline-primary btn-sm">← View All Cities</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jobs Grid -->
+  {% if jobs %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for job in jobs %}
+    <div class="col">
+      <div
+        class="card h-100 clickable-card"
+        onclick="location.href='{{ url_for('job_detail', job_id=job.id) }}'"
+      >
+        <div class="card-body">
+          <!-- Job Type Badge -->
+          {% if job.details.get('Job Type') %}
+          <div class="job-type-badge-inline mb-3">
+            {% if job.details.get('Job Type', '').lower() == 'government' %}
+            <span class="badge-govt">🏛️ Government</span>
+            {% elif job.details.get('Job Type', '').lower() == 'private' %}
+            <span class="badge-private">🏢 Private</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <h5 class="card-title">{{ job.title }}</h5>
+
+          {% if job.images and job.images[0] %}
+          <img
+            src="{{ job.images[0] }}"
+            alt="Job Image"
+            class="img-fluid rounded mb-3"
+            style="max-height: 150px; object-fit: cover"
+          />
+          {% endif %}
+
+          <div class="job-details">
+            {% if job.details.get('Location') %}
+            <p class="job-detail-item mb-2">
+              <strong><i>📍</i> Location:</strong> {{
+              job.details.get('Location') }}
+            </p>
+            {% endif %} {% if job.details.get('Last Date for Apply') %}
+            <p class="job-detail-item mb-2">
+              <strong><i>⏰</i> Deadline:</strong> {{ job.details.get('Last Date
+              for Apply') }}
+            </p>
+            {% endif %} {% if job.details.get('Education') %}
+            <p class="job-detail-item mb-2">
+              <strong><i>🎓</i> Education:</strong> {{
+              job.details.get('Education') }}
+            </p>
+            {% endif %} {% if job.details.get('Department') %}
+            <p class="job-detail-item mb-2">
+              <strong><i>🏢</i> Department:</strong> {{
+              job.details.get('Department') }}
+            </p>
+            {% endif %}
+          </div>
+
+          <a
+            href="{{ url_for('job_detail', job_id=job.id) }}"
+            class="btn btn-primary mt-3"
+          >
+            Apply Now <i>→</i>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <div class="mb-4">
+      <i style="font-size: 4rem; opacity: 0.5">🔍</i>
+    </div>
+    <h3>No jobs found in {{ city }} at the moment</h3>
+    <p class="text-muted">
+      But don't worry! New opportunities are added daily.
+    </p>
+    <div class="mt-4">
+      <a href="/" class="btn btn-primary me-3">View All Jobs</a>
+      <a href="/government-jobs" class="btn btn-outline-primary"
+        >Government Jobs</a
+      >
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- SEO Footer Content -->
+  <div class="row mt-5">
+    <div class="col-12">
+      <div class="bg-light rounded-4 p-4">
+        <h3 class="h5 fw-bold mb-3">About Job Market in {{ city }}</h3>
+        {% if city.lower() == 'karachi' %}
+        <p class="text-muted mb-3">
+          Karachi, being Pakistan's commercial capital, offers the largest job
+          market in the country. The city hosts numerous multinational
+          corporations, banks, and industrial companies providing diverse
+          employment opportunities.
+        </p>
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="fw-bold">Major Industries in Karachi:</h6>
+            <ul class="list-unstyled small">
+              <li>• Banking & Financial Services</li>
+              <li>• Textile & Manufacturing</li>
+              <li>• Information Technology</li>
+              <li>• Port & Shipping</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold">Popular Job Categories:</h6>
+            <ul class="list-unstyled small">
+              <li>• Management & Administration</li>
+              <li>• Sales & Marketing</li>
+              <li>• Engineering & Technical</li>
+              <li>• Healthcare & Medical</li>
+            </ul>
+          </div>
+        </div>
+        {% elif city.lower() == 'lahore' %}
+        <p class="text-muted mb-3">
+          Lahore, the cultural capital of Pakistan, is a major economic hub with
+          thriving industries in textiles, information technology, and
+          education. The city offers both government and private sector
+          opportunities.
+        </p>
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="fw-bold">Major Industries in Lahore:</h6>
+            <ul class="list-unstyled small">
+              <li>• Information Technology</li>
+              <li>• Textile & Garments</li>
+              <li>• Education & Training</li>
+              <li>• Food & Agriculture</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold">Growing Sectors:</h6>
+            <ul class="list-unstyled small">
+              <li>• Software Development</li>
+              <li>• Digital Marketing</li>
+              <li>• E-commerce</li>
+              <li>• Healthcare Services</li>
+            </ul>
+          </div>
+        </div>
+        {% elif city.lower() == 'islamabad' %}
+        <p class="text-muted mb-3">
+          Islamabad, the capital city, is the center of government operations
+          and diplomatic activities. The city offers excellent opportunities in
+          government sectors, international organizations, and emerging tech
+          companies.
+        </p>
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="fw-bold">Major Employers in Islamabad:</h6>
+            <ul class="list-unstyled small">
+              <li>• Federal Government</li>
+              <li>• International Organizations</li>
+              <li>• Educational Institutions</li>
+              <li>• Tech Companies</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold">Key Opportunities:</h6>
+            <ul class="list-unstyled small">
+              <li>• Civil Services</li>
+              <li>• Development Sector</li>
+              <li>• Research & Academia</li>
+              <li>• Consulting Services</li>
+            </ul>
+          </div>
+        </div>
+        {% else %}
+        <p class="text-muted mb-3">
+          {{ city }} offers diverse employment opportunities across government
+          and private sectors. The city continues to grow as an important
+          economic center in Pakistan with expanding job markets and career
+          opportunities.
+        </p>
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="fw-bold">Job Categories Available:</h6>
+            <ul class="list-unstyled small">
+              <li>• Government Positions</li>
+              <li>• Private Sector Jobs</li>
+              <li>• Healthcare & Education</li>
+              <li>• Local Industries</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold">Why Work in {{ city }}:</h6>
+            <ul class="list-unstyled small">
+              <li>• Growing Economy</li>
+              <li>• Career Opportunities</li>
+              <li>• Work-Life Balance</li>
+              <li>• Lower Cost of Living</li>
+            </ul>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Cities -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <h4 class="h6 fw-bold mb-3">Explore Jobs in Other Cities</h4>
+      <div class="d-flex flex-wrap gap-2">
+        {% for related_city in ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi',
+        'Faisalabad', 'Multan'] %} {% if related_city.lower() != city.lower() %}
+        <a
+          href="/jobs/{{ related_city.lower() }}"
+          class="btn btn-outline-secondary btn-sm"
+          >{{ related_city }}</a
+        >
+        {% endif %} {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .clickable-card {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .clickable-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .badge-govt {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  .badge-private {
+    background: linear-gradient(135deg, #007bff, #6c5ce7);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  .job-detail-item {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .job-detail-item i {
+    font-style: normal;
+    margin-right: 5px;
+  }
+
+  .breadcrumb-item a {
+    text-decoration: none;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends "base.html" %} {% block meta %} {% set meta_title = category + " in
+Pakistan 2025 | JobsFindeRR" %} {% set meta_description = description %} {% set
+meta_keywords = keywords %} {% endblock %} {% block title %}{{ category }} in
+Pakistan 2025 | JobsFindeRR{% endblock %} {% block content %}
+<div class="container py-4">
+  <!-- SEO Header Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="bg-light rounded-4 p-4 text-center">
+        <h1 class="display-6 fw-bold text-primary mb-3">
+          {{ category }} in Pakistan 2025
+        </h1>
+        <p class="lead text-muted mb-0">{{ description }}</p>
+        <div class="mt-3">
+          <span class="badge bg-primary">{{ jobs|length }} Jobs Available</span>
+          <span class="badge bg-success">Updated Daily</span>
+          <span class="badge bg-info">Apply Online</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jobs Count and Filter Info -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0">Showing {{ jobs|length }} {{ category }}</h2>
+        <a href="/" class="btn btn-outline-primary btn-sm">← View All Jobs</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jobs Grid -->
+  {% if jobs %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for job in jobs %}
+    <div class="col">
+      <div
+        class="card h-100 clickable-card"
+        onclick="window.location.href='{{ url_for('job_detail', job_id=job.id) }}'"
+      >
+        <div class="card-body">
+          <!-- Job Type Badge -->
+          {% if job.details.get('Job Type') %}
+          <div class="job-type-badge-inline mb-3">
+            {% if job.details.get('Job Type', '').lower() == 'government' %}
+            <span class="badge-govt">🏛️ Government</span>
+            {% elif job.details.get('Job Type', '').lower() == 'private' %}
+            <span class="badge-private">🏢 Private</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <h5 class="card-title">{{ job.title }}</h5>
+
+          {% if job.images and job.images[0] %}
+          <img
+            src="{{ job.images[0] }}"
+            alt="Job Image"
+            class="img-fluid rounded mb-3"
+            style="max-height: 150px; object-fit: cover"
+          />
+          {% endif %}
+
+          <div class="job-details">
+            {% if job.details.get('Location') %}
+            <p class="job-detail-item mb-2">
+              <strong><i>📍</i> Location:</strong> {{
+              job.details.get('Location') }}
+            </p>
+            {% endif %} {% if job.details.get('Last Date for Apply') %}
+            <p class="job-detail-item mb-2">
+              <strong><i>⏰</i> Deadline:</strong> {{ job.details.get('Last Date
+              for Apply') }}
+            </p>
+            {% endif %} {% if job.details.get('Education') %}
+            <p class="job-detail-item mb-2">
+              <strong><i>🎓</i> Education:</strong> {{
+              job.details.get('Education') }}
+            </p>
+            {% endif %}
+          </div>
+
+          <a
+            href="{{ url_for('job_detail', job_id=job.id) }}"
+            class="btn btn-primary mt-3"
+          >
+            Apply Now <i>→</i>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <h3>No {{ category.lower() }} available at the moment</h3>
+    <p class="text-muted">Check back soon for new opportunities!</p>
+    <a href="/" class="btn btn-primary">View All Jobs</a>
+  </div>
+  {% endif %}
+
+  <!-- SEO Footer Content -->
+  <div class="row mt-5">
+    <div class="col-12">
+      <div class="bg-light rounded-4 p-4">
+        <h3 class="h5 fw-bold mb-3">About {{ category }} in Pakistan</h3>
+        {% if 'Government' in category %}
+        <p class="text-muted mb-3">
+          Government jobs in Pakistan offer job security, good benefits, and
+          career growth opportunities. Federal and provincial departments
+          regularly announce vacancies for various positions including
+          administrative, technical, and specialized roles.
+        </p>
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="fw-bold">Popular Government Departments:</h6>
+            <ul class="list-unstyled small">
+              <li>• Health Department</li>
+              <li>• Education Department</li>
+              <li>• Police Department</li>
+              <li>• Revenue Department</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold">Benefits of Government Jobs:</h6>
+            <ul class="list-unstyled small">
+              <li>• Job Security</li>
+              <li>• Pension Benefits</li>
+              <li>• Medical Allowances</li>
+              <li>• Career Progression</li>
+            </ul>
+          </div>
+        </div>
+        {% else %}
+        <p class="text-muted mb-3">
+          Private sector jobs in Pakistan offer competitive salaries, modern
+          work environments, and rapid career advancement. Multinational
+          companies and local organizations provide diverse opportunities across
+          various industries.
+        </p>
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="fw-bold">Popular Private Sectors:</h6>
+            <ul class="list-unstyled small">
+              <li>• Banking & Finance</li>
+              <li>• Information Technology</li>
+              <li>• Telecommunications</li>
+              <li>• Manufacturing</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold">Benefits of Private Jobs:</h6>
+            <ul class="list-unstyled small">
+              <li>• Competitive Salaries</li>
+              <li>• Performance Bonuses</li>
+              <li>• Skill Development</li>
+              <li>• Fast Career Growth</li>
+            </ul>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .clickable-card {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .clickable-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .badge-govt {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  .badge-private {
+    background: linear-gradient(135deg, #007bff, #6c5ce7);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+  }
+
+  .job-detail-item {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .job-detail-item i {
+    font-style: normal;
+    margin-right: 5px;
+  }
+</style>
+{% endblock %}
