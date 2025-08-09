@@ -1,20 +1,127 @@
 {% extends "base.html" %} {% block meta %} {% set meta_title = category + " in
-Pakistan 2025 | JobsFindeRR" %} {% set meta_description = description %} {% set
-meta_keywords = keywords %} {% endblock %} {% block title %}{{ category }} in
-Pakistan 2025 | JobsFindeRR{% endblock %} {% block content %}
+Pakistan 2025 - Latest Opportunities | JobsFindeRR" %} {% set meta_description =
+description + " Find " + jobs|length|string + "+ latest " + category.lower() + "
+opportunities across Pakistan. Apply online today!" %} {% set meta_keywords =
+keywords + ", pakistan jobs 2025, online jobs, career opportunities" %} {%
+endblock %} {% block title %}{{ category }} in Pakistan 2025 - Latest
+Opportunities | JobsFindeRR{% endblock %} {% block content %}
 <div class="container py-4">
-  <!-- SEO Header Section -->
+  <!-- Enhanced SEO Header Section -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="bg-light rounded-4 p-4 text-center">
-        <h1 class="display-6 fw-bold text-primary mb-3">
-          {{ category }} in Pakistan 2025
-        </h1>
-        <p class="lead text-muted mb-0">{{ description }}</p>
-        <div class="mt-3">
-          <span class="badge bg-primary">{{ jobs|length }} Jobs Available</span>
-          <span class="badge bg-success">Updated Daily</span>
-          <span class="badge bg-info">Apply Online</span>
+      <div
+        class="bg-gradient rounded-4 p-5 text-center text-white"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+      >
+        <h1 class="display-5 fw-bold mb-3">{{ category }} in Pakistan 2025</h1>
+        <p class="lead mb-4">{{ description }}</p>
+        <div class="row justify-content-center">
+          <div class="col-md-8">
+            <div class="row text-center">
+              <div class="col-4">
+                <div class="border-end border-light">
+                  <h3 class="fw-bold">{{ jobs|length }}+</h3>
+                  <small>Jobs Available</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="border-end border-light">
+                  <h3 class="fw-bold">Daily</h3>
+                  <small>Updates</small>
+                </div>
+              </div>
+              <div class="col-4">
+                <div>
+                  <h3 class="fw-bold">Free</h3>
+                  <small>Applications</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEO Content Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="bg-light rounded-4 p-4">
+        <h2 class="h4 fw-bold text-primary mb-3">
+          About {{ category }} in Pakistan
+        </h2>
+        {% if 'Government' in category %}
+        <p class="text-muted mb-3">
+          Government jobs in Pakistan offer excellent career opportunities with
+          job security, competitive salaries, and comprehensive benefits. These
+          positions are available across federal, provincial, and local
+          government departments including health, education, police, civil
+          services, and administrative roles.
+        </p>
+        <div class="row">
+          <div class="col-md-6">
+            <h5 class="text-primary">Popular Government Departments:</h5>
+            <ul class="list-unstyled">
+              <li>✅ Health Department Jobs</li>
+              <li>✅ Education Department Jobs</li>
+              <li>✅ Police Department Jobs</li>
+              <li>✅ Civil Services Jobs</li>
+              <li>✅ Federal Government Jobs</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h5 class="text-primary">Key Benefits:</h5>
+            <ul class="list-unstyled">
+              <li>🎯 Job Security & Stability</li>
+              <li>🎯 Pension & Retirement Benefits</li>
+              <li>🎯 Medical Coverage</li>
+              <li>🎯 Career Growth Opportunities</li>
+              <li>🎯 Work-Life Balance</li>
+            </ul>
+          </div>
+        </div>
+        {% elif 'Private' in category %}
+        <p class="text-muted mb-3">
+          Private sector jobs in Pakistan provide dynamic career opportunities
+          with competitive packages, skill development, and faster career
+          progression. These positions span across multinational companies,
+          local businesses, banks, IT companies, and various service sectors.
+        </p>
+        <div class="row">
+          <div class="col-md-6">
+            <h5 class="text-primary">Popular Private Sectors:</h5>
+            <ul class="list-unstyled">
+              <li>✅ Banking & Finance Jobs</li>
+              <li>✅ IT & Technology Jobs</li>
+              <li>✅ Telecommunications Jobs</li>
+              <li>✅ Manufacturing Jobs</li>
+              <li>✅ Retail & Sales Jobs</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h5 class="text-primary">Key Advantages:</h5>
+            <ul class="list-unstyled">
+              <li>🎯 Higher Starting Salaries</li>
+              <li>🎯 Performance-Based Bonuses</li>
+              <li>🎯 Skill Development Programs</li>
+              <li>🎯 International Exposure</li>
+              <li>🎯 Faster Promotions</li>
+            </ul>
+          </div>
+        </div>
+        {% endif %}
+
+        <div
+          class="mt-4 p-3 bg-white rounded-3 border-start border-primary border-4"
+        >
+          <h5 class="text-primary mb-2">How to Apply for {{ category }}:</h5>
+          <ol class="mb-0">
+            <li>Browse available positions below</li>
+            <li>Click on any job to view detailed requirements</li>
+            <li>Prepare required documents (CV, certificates, etc.)</li>
+            <li>Follow the application instructions provided</li>
+            <li>Submit your application before the deadline</li>
+          </ol>
         </div>
       </div>
     </div>

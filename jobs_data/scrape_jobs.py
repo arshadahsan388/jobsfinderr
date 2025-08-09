@@ -75,6 +75,9 @@ for i, url in enumerate(post_links):
                     app_form_link = href
                     break
 
+    # 🚫 DON'T SET FALLBACK URL - if no real application link found, leave it None
+    # This prevents showing fake/generic links to users
+
 
 
 

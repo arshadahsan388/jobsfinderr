@@ -1,11 +1,24 @@
 User-agent: *
 Allow: /
 
-# Important pages
+# Priority pages for search engines
+Allow: /government-jobs
+Allow: /private-jobs
+Allow: /jobs/*
 Allow: /job/*
 Allow: /about
 Allow: /contact
 Allow: /privacy-policy
+
+# Sitemap location
+Sitemap: https://jobsfinderr.me/sitemap.xml
+
+# High priority job categories
+Allow: /jobs/karachi
+Allow: /jobs/lahore
+Allow: /jobs/islamabad
+Allow: /jobs/peshawar
+Allow: /jobs/quetta
 
 # Block admin/test pages
 Disallow: /debug-scheduler

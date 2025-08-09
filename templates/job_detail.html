@@ -1,9 +1,71 @@
-{% extends "base.html" %} {% block title %}{{ job.title }} - Government Jobs in
-Pakistan{% endblock %} {% block meta %} {% set meta_title = "Latest Government
-Jobs in Pakistan - July 2025" %} {% set meta_description = "Explore government
-jobs updated daily. Smart AI-powered job search for every city in Pakistan." %}
-{% set meta_keywords = "govt jobs, karachi jobs, lahore jobs, remote, AI jobs"
-%} {% endblock %}{% block content %}
+{% extends "base.html" %} {% block title %}{{ job.title }} - {{
+job.details['Department'] }} Jobs Pakistan 2025 | JobsFindeRR{% endblock %} {%
+block meta %} {% set meta_title = job.title + " - " + job.details['Department']
++ " Jobs Pakistan 2025" %} {% set meta_description = "Apply for " + job.title +
+" at " + job.details['Department'] + ". Location: " + job.details['Location'] +
+". Last date: " + job.details['Last Date for Apply'] + ". Apply online at
+JobsFindeRR!" %} {% set meta_keywords = job.title.lower() + ", " +
+job.details['Department'].lower() + " jobs, government jobs pakistan, jobs in "
++ job.details['Location'].lower() + ", pakistan jobs 2025" %} {% endblock %}
+
+<!-- JobPosting Schema Markup for Rich Search Results -->
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    "title": "{{ job.title }}",
+    "description": "{{ job.title }} position available at {{ job.details['Department'] }}. Location: {{ job.details['Location'] }}. Education: {{ job.details['Education'] }}. {% if job.summary %}{{ job.summary | striptags | truncate(300) }}{% endif %}",
+    "identifier": {
+      "@type": "PropertyValue",
+      "name": "JobsFindeRR Job ID",
+      "value": "{{ job.id if job.id else 'JF-' + loop.index0|string }}"
+    },
+    "datePosted": "{{ moment().format('YYYY-MM-DD') }}",
+    "validThrough": "{{ job.details['Last Date for Apply'] }}",
+    "employmentType": [
+      {% if 'permanent' in job.details['Job Type'].lower() %}"FULL_TIME"
+      {% elif 'contract' in job.details['Job Type'].lower() %}"CONTRACT"
+      {% elif 'part' in job.details['Job Type'].lower() %}"PART_TIME"
+      {% else %}"FULL_TIME"
+      {% endif %}
+    ],
+    "hiringOrganization": {
+      "@type": "Organization",
+      "name": "{{ job.details['Department'] }}",
+      "sameAs": "https://jobsfinderr.me"
+    },
+    "jobLocation": {
+      "@type": "Place",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "{{ job.details['Location'] }}",
+        "addressRegion": "{{ job.details['Location'] }}",
+        "addressCountry": "Pakistan"
+      }
+    },
+    "baseSalary": {
+      "@type": "MonetaryAmount",
+      "currency": "PKR",
+      "value": {
+        "@type": "QuantitativeValue",
+        "unitText": "MONTH",
+        "value": "{{ job.details['Salary'] }}"
+      }
+    },
+    "qualifications": "{{ job.details['Education'] }}",
+    "experienceRequirements": "{{ job.details['Experience'] }}",
+    "skills": "{{ job.title }}, Government Jobs, Pakistan Jobs",
+    "jobBenefits": "Government benefits package, job security, career growth opportunities",
+    "applicationContact": {
+      "@type": "ContactPoint",
+      "contactType": "HR",
+      "email": "info@jobsfinderr.me"
+    },
+    "url": "{{ request.url }}"
+  }
+</script>
+
+{% block content %}
 <div class="p-4 p-sm-5 shadow rounded content-container">
   <h1 class="h3 text-primary mb-4">{{ job.title }}</h1>
 
@@ -53,7 +115,8 @@ jobs updated daily. Smart AI-powered job search for every city in Pakistan." %}
   </div>
 
   <div class="d-flex flex-column flex-sm-row gap-3">
-    {% if job.application_form %}
+    {% if job.application_form and job.application_form != 'None' and
+    'remotejobspakistan.com' not in job.application_form %}
     <a
       href="{{ job.application_form }}"
       target="_blank"
@@ -61,6 +124,13 @@ jobs updated daily. Smart AI-powered job search for every city in Pakistan." %}
     >
       Apply Online
     </a>
+    {% else %}
+    <!-- No valid application link available -->
+    <div class="alert alert-info w-100">
+      <i class="bi bi-info-circle me-2"></i>
+      <strong>Application Instructions:</strong> Please follow the application
+      instructions above or contact the department directly.
+    </div>
     {% endif %}
     <a href="{{ url_for('home') }}" class="btn btn-secondary w-100 w-sm-auto">
       ← Back to All Jobs

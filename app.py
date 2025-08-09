@@ -445,6 +445,36 @@ def sitemap():
     response.headers['Cache-Control'] = 'public, max-age=86400'  # Cache for 1 day
     return response
 
+@app.route('/indexnow-key.txt')
+def indexnow_key():
+    """Serve IndexNow verification key"""
+    return app.send_static_file('jobsfinderr-indexnow-2025.txt')
+
+@app.route('/submit-indexnow', methods=['POST', 'GET'])
+def submit_indexnow():
+    """Manually trigger IndexNow submission for instant indexing"""
+    try:
+        from indexnow_submit import quick_index_submission
+        success = quick_index_submission()
+        
+        if success:
+            return jsonify({
+                "status": "success",
+                "message": "✅ Pages submitted for instant indexing!",
+                "note": "Search engines will be notified immediately"
+            })
+        else:
+            return jsonify({
+                "status": "error", 
+                "message": "❌ IndexNow submission failed"
+            }), 500
+            
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"❌ Error: {str(e)}"
+        }), 500
+
 
 
 def run_scripts():
