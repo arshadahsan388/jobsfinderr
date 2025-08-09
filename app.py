@@ -450,6 +450,78 @@ def indexnow_key():
     """Serve IndexNow verification key"""
     return app.send_static_file('jobsfinderr-indexnow-2025.txt')
 
+@app.route('/robots.txt')
+def robots_txt():
+    """Serve robots.txt file for search engine crawlers"""
+    try:
+        with open('robots.txt', 'r', encoding='utf-8') as f:
+            robots_content = f.read()
+        
+        response = Response(robots_content, mimetype='text/plain')
+        response.headers['Cache-Control'] = 'public, max-age=86400'  # Cache for 1 day
+        return response
+    except Exception as e:
+        # Fallback robots.txt if file not found
+        fallback_robots = """User-agent: *
+Allow: /
+
+# Priority pages for search engines
+Allow: /government-jobs
+Allow: /private-jobs
+Allow: /jobs/*
+Allow: /job/*
+Allow: /about
+Allow: /contact
+Allow: /privacy-policy
+
+# Sitemap location
+Sitemap: https://jobsfinderr.me/sitemap.xml
+
+# High priority job categories
+Allow: /jobs/karachi
+Allow: /jobs/lahore
+Allow: /jobs/islamabad
+Allow: /jobs/peshawar
+Allow: /jobs/rawalpindi
+Allow: /jobs/faisalabad
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+"""
+        response = Response(fallback_robots, mimetype='text/plain')
+        response.headers['Cache-Control'] = 'public, max-age=86400'
+        return response
+
+@app.route('/ads.txt')
+def ads_txt():
+    """Serve ads.txt file for advertising networks monetization"""
+    try:
+        with open('ads.txt', 'r', encoding='utf-8') as f:
+            ads_content = f.read()
+        
+        response = Response(ads_content, mimetype='text/plain')
+        response.headers['Cache-Control'] = 'public, max-age=86400'  # Cache for 1 day
+        return response
+    except Exception as e:
+        # Fallback ads.txt with your actual AdSense publisher ID
+        fallback_ads = """# Ads.txt for jobsfinderr.me
+# This file authorizes who can sell advertising on this website
+
+# Google AdSense - ACTIVE Publisher ID
+google.com, pub-6268553487157911, DIRECT, f08c47fec0942fa0
+
+# Additional ad networks can be added here
+# Each line format: domain.com, publisher-account-id, relationship, certification-authority
+
+# Media.net (optional)
+# media.net, 8CUO9I0PQ, DIRECT
+
+# Note: This file is automatically served at https://jobsfinderr.me/ads.txt
+"""
+        response = Response(fallback_ads, mimetype='text/plain')
+        response.headers['Cache-Control'] = 'public, max-age=86400'
+        return response
+
 @app.route('/submit-indexnow', methods=['POST', 'GET'])
 def submit_indexnow():
     """Manually trigger IndexNow submission for instant indexing"""

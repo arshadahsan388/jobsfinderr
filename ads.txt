@@ -1,0 +1,16 @@
+# Ads.txt for jobsfinderr.me
+# This file authorizes who can sell advertising on this website
+
+# Google AdSense - UPDATE with your actual publisher ID when approved
+# Format: google.com, pub-XXXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+# Get your publisher ID from: https://www.google.com/adsense/
+
+# ACTIVE AdSense Publisher ID:
+google.com, pub-6268553487157911, DIRECT, f08c47fec0942fa0
+
+# Additional ad networks (optional):
+# Media.net: media.net, 8CUO9I0PQ, DIRECT
+# PropellerAds: propellerads.com, your-account-id, DIRECT
+# Add more networks as needed
+
+# Note: This file must be accessible at https://jobsfinderr.me/ads.txt
