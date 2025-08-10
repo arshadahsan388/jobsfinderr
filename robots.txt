@@ -13,6 +13,11 @@ Allow: /privacy-policy
 # Sitemap location
 Sitemap: https://jobsfinderr.me/sitemap.xml
 
+# RSS and JSON Feeds for job aggregators and LLMs
+Allow: /rss.xml
+Allow: /feed.json
+Allow: /api/jobs
+
 # High priority job categories
 Allow: /jobs/karachi
 Allow: /jobs/lahore

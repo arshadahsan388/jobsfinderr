@@ -100,11 +100,11 @@ def job_detail(job_id):
 
 @app.route("/about")
 def about():
-    return render_template("about.html")
+    return render_template("About.html")
 
 @app.route("/contact")
 def contact():
-    return render_template("contact.html")
+    return render_template("Contact.html")
 
 @app.route("/debug-scheduler")
 def debug_scheduler():
@@ -418,6 +418,23 @@ def sitemap():
         "lastmod": ten_days_ago,
         "priority": "0.5"
     })
+    
+    # API and Feed endpoints for job aggregators and LLMs
+    pages.append({
+        "loc": f"{base_url}/rss.xml",
+        "lastmod": ten_days_ago,
+        "priority": "0.9"
+    })
+    pages.append({
+        "loc": f"{base_url}/feed.json",
+        "lastmod": ten_days_ago,
+        "priority": "0.9"
+    })
+    pages.append({
+        "loc": f"{base_url}/api/jobs",
+        "lastmod": ten_days_ago,
+        "priority": "0.8"
+    })
 
     # Load all jobs from enhanced JSON file
     jobs = load_jobs()
@@ -521,6 +538,249 @@ google.com, pub-6268553487157911, DIRECT, f08c47fec0942fa0
         response = Response(fallback_ads, mimetype='text/plain')
         response.headers['Cache-Control'] = 'public, max-age=86400'
         return response
+
+@app.route('/rss.xml')
+def rss_feed():
+    """RSS Feed for job aggregators, Google Jobs, and LLMs"""
+    try:
+        jobs = load_jobs()
+        base_url = "https://jobsfinderr.me"
+        
+        # Create RSS XML structure
+        rss = ET.Element('rss', version="2.0")
+        rss.set('xmlns:atom', 'http://www.w3.org/2005/Atom')
+        rss.set('xmlns:content', 'http://purl.org/rss/1.0/modules/content/')
+        rss.set('xmlns:dc', 'http://purl.org/dc/elements/1.1/')
+        
+        channel = ET.SubElement(rss, 'channel')
+        
+        # Channel metadata
+        ET.SubElement(channel, 'title').text = "JobsFindeRR - Latest Jobs in Pakistan"
+        ET.SubElement(channel, 'link').text = base_url
+        ET.SubElement(channel, 'description').text = "Latest government and private sector job opportunities in Pakistan. Updated daily with fresh job postings."
+        ET.SubElement(channel, 'language').text = "en-us"
+        ET.SubElement(channel, 'lastBuildDate').text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
+        ET.SubElement(channel, 'generator').text = "JobsFindeRR RSS Generator"
+        ET.SubElement(channel, 'webMaster').text = "admin@jobsfinderr.me (JobsFindeRR Team)"
+        ET.SubElement(channel, 'managingEditor').text = "editor@jobsfinderr.me (JobsFindeRR Editorial)"
+        ET.SubElement(channel, 'copyright').text = f"Copyright {datetime.now().year} JobsFindeRR. All rights reserved."
+        ET.SubElement(channel, 'category').text = "Jobs and Employment"
+        
+        # Atom self link
+        atom_link = ET.SubElement(channel, 'atom:link')
+        atom_link.set('href', f"{base_url}/rss.xml")
+        atom_link.set('rel', 'self')
+        atom_link.set('type', 'application/rss+xml')
+        
+        # Add latest 50 jobs to RSS
+        for job in jobs[:50]:
+            item = ET.SubElement(channel, 'item')
+            
+            job_title = job.get('title', 'Untitled Job')
+            job_id = job.get('id', 0)
+            job_details = job.get('details', {})
+            
+            # Required RSS elements
+            ET.SubElement(item, 'title').text = job_title
+            ET.SubElement(item, 'link').text = f"{base_url}/job/{job_id}"
+            ET.SubElement(item, 'guid').text = f"{base_url}/job/{job_id}"
+            
+            # Description with job details
+            description = f"""
+            <![CDATA[
+            <h3>{job_title}</h3>
+            <p><strong>Department:</strong> {job_details.get('Department', 'N/A')}</p>
+            <p><strong>Location:</strong> {job_details.get('Location', 'Pakistan')}</p>
+            <p><strong>Salary:</strong> {job_details.get('Salary', 'As per rules')}</p>
+            <p><strong>Education:</strong> {job_details.get('Education', 'As required')}</p>
+            <p><strong>Experience:</strong> {job_details.get('Experience', 'Fresh/Experienced')}</p>
+            <p><strong>Last Date:</strong> {job_details.get('Last Date for Apply', 'Check details')}</p>
+            <p><strong>Job Type:</strong> {job_details.get('Job Type', 'Government')}</p>
+            <p><a href="{base_url}/job/{job_id}">View Full Details &amp; Apply</a></p>
+            ]]>
+            """
+            ET.SubElement(item, 'description').text = description
+            
+            # Additional metadata
+            ET.SubElement(item, 'category').text = job_details.get('Job Type', 'Government')
+            ET.SubElement(item, 'dc:creator').text = "JobsFindeRR Editorial Team"
+            ET.SubElement(item, 'pubDate').text = datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
+            
+            # Custom namespace for job-specific data
+            ET.SubElement(item, 'source').text = "JobsFindeRR.me"
+        
+        # Convert to string and create response
+        rss_xml = ET.tostring(rss, encoding='utf-8', method='xml')
+        rss_content = b'<?xml version="1.0" encoding="UTF-8"?>\n' + rss_xml
+        
+        response = Response(rss_content, mimetype='application/rss+xml')
+        response.headers['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
+        response.headers['Access-Control-Allow-Origin'] = '*'  # Allow cross-origin requests
+        return response
+        
+    except Exception as e:
+        return Response(f"Error generating RSS feed: {str(e)}", status=500)
+
+@app.route('/feed.json')
+def json_feed():
+    """JSON Feed for modern APIs, ChatGPT plugins, and AI bots"""
+    try:
+        jobs = load_jobs()
+        base_url = "https://jobsfinderr.me"
+        
+        # JSON Feed 1.1 specification
+        feed = {
+            "version": "https://jsonfeed.org/version/1.1",
+            "title": "JobsFindeRR - Pakistan Jobs Feed",
+            "home_page_url": base_url,
+            "feed_url": f"{base_url}/feed.json",
+            "description": "Latest government and private sector job opportunities in Pakistan. Updated daily with comprehensive job details.",
+            "icon": f"{base_url}/static/favicon.ico",
+            "favicon": f"{base_url}/static/favicon.ico",
+            "language": "en",
+            "authors": [
+                {
+                    "name": "JobsFindeRR Editorial Team",
+                    "url": base_url
+                }
+            ],
+            "items": []
+        }
+        
+        # Add latest 100 jobs to JSON feed
+        for job in jobs[:100]:
+            job_title = job.get('title', 'Untitled Job')
+            job_id = job.get('id', 0)
+            job_details = job.get('details', {})
+            job_instructions = job.get('instructions', [])
+            
+            # Format content as HTML
+            content_html = f"""
+            <h2>{job_title}</h2>
+            <table border="1" style="border-collapse: collapse; width: 100%;">
+                <tr><td><strong>Department</strong></td><td>{job_details.get('Department', 'N/A')}</td></tr>
+                <tr><td><strong>Location</strong></td><td>{job_details.get('Location', 'Pakistan')}</td></tr>
+                <tr><td><strong>Salary</strong></td><td>{job_details.get('Salary', 'As per government rules')}</td></tr>
+                <tr><td><strong>Education</strong></td><td>{job_details.get('Education', 'As required')}</td></tr>
+                <tr><td><strong>Experience</strong></td><td>{job_details.get('Experience', 'Fresh/Experienced')}</td></tr>
+                <tr><td><strong>Age Limit</strong></td><td>{job_details.get('Age', 'As per rules')}</td></tr>
+                <tr><td><strong>Total Vacancies</strong></td><td>{job_details.get('Total Vacancies', 'Multiple')}</td></tr>
+                <tr><td><strong>Job Type</strong></td><td>{job_details.get('Job Type', 'Government')}</td></tr>
+                <tr><td><strong>Last Date</strong></td><td>{job_details.get('Last Date for Apply', 'Check details')}</td></tr>
+            </table>
+            
+            <h3>Application Instructions:</h3>
+            <ol>
+            """
+            
+            for instruction in job_instructions:
+                content_html += f"<li>{instruction}</li>"
+            
+            content_html += f"""
+            </ol>
+            <p><a href="{base_url}/job/{job_id}">Apply Now - View Full Details</a></p>
+            """
+            
+            # Create summary text without HTML
+            summary = f"{job_title} - {job_details.get('Department', 'Government Department')} in {job_details.get('Location', 'Pakistan')}. Salary: {job_details.get('Salary', 'Competitive')}. Last date: {job_details.get('Last Date for Apply', 'Check details')}."
+            
+            item = {
+                "id": f"{base_url}/job/{job_id}",
+                "url": f"{base_url}/job/{job_id}",
+                "title": job_title,
+                "content_html": content_html,
+                "summary": summary,
+                "date_published": datetime.now().isoformat(),
+                "date_modified": datetime.now().isoformat(),
+                "authors": [
+                    {
+                        "name": "JobsFindeRR Team"
+                    }
+                ],
+                "tags": [
+                    job_details.get('Job Type', 'Government'),
+                    job_details.get('Location', 'Pakistan'),
+                    "Pakistan Jobs",
+                    "Employment"
+                ],
+                "external_url": job.get('application_form', ''),
+                "_jobsfinderr": {
+                    "job_type": job_details.get('Job Type', 'Government'),
+                    "location": job_details.get('Location', 'Pakistan'),
+                    "salary": job_details.get('Salary', 'As per rules'),
+                    "education": job_details.get('Education', 'Various'),
+                    "experience": job_details.get('Experience', 'Fresh/Experienced'),
+                    "vacancies": job_details.get('Total Vacancies', 'Multiple'),
+                    "last_date": job_details.get('Last Date for Apply', 'TBD'),
+                    "department": job_details.get('Department', 'Government')
+                }
+            }
+            
+            feed["items"].append(item)
+        
+        response = jsonify(feed)
+        response.headers['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
+        response.headers['Access-Control-Allow-Origin'] = '*'  # Allow cross-origin requests
+        return response
+        
+    except Exception as e:
+        return jsonify({"error": f"Error generating JSON feed: {str(e)}"}), 500
+
+@app.route('/api/jobs')
+def api_jobs():
+    """REST API endpoint for external integrations"""
+    try:
+        jobs = load_jobs()
+        
+        # Get query parameters
+        limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+        job_type = request.args.get('type', '')
+        location = request.args.get('location', '')
+        
+        # Filter jobs
+        filtered_jobs = jobs
+        
+        if job_type:
+            filtered_jobs = [job for job in filtered_jobs 
+                           if job.get('details', {}).get('Job Type', '').lower() == job_type.lower()]
+        
+        if location:
+            filtered_jobs = [job for job in filtered_jobs 
+                           if location.lower() in job.get('details', {}).get('Location', '').lower()]
+        
+        # Apply pagination
+        paginated_jobs = filtered_jobs[offset:offset+limit]
+        
+        # Format response
+        api_response = {
+            "status": "success",
+            "total_jobs": len(jobs),
+            "filtered_jobs": len(filtered_jobs),
+            "limit": limit,
+            "offset": offset,
+            "jobs": []
+        }
+        
+        for job in paginated_jobs:
+            job_data = {
+                "id": job.get('id'),
+                "title": job.get('title'),
+                "url": f"https://jobsfinderr.me/job/{job.get('id')}",
+                "details": job.get('details', {}),
+                "instructions": job.get('instructions', []),
+                "application_url": job.get('application_form', ''),
+                "posted_date": datetime.now().isoformat()
+            }
+            api_response["jobs"].append(job_data)
+        
+        response = jsonify(api_response)
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Cache-Control'] = 'public, max-age=1800'  # Cache for 30 minutes
+        return response
+        
+    except Exception as e:
+        return jsonify({"error": f"API error: {str(e)}"}), 500
 
 @app.route('/submit-indexnow', methods=['POST', 'GET'])
 def submit_indexnow():
