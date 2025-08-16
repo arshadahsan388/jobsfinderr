@@ -1,5 +1,6 @@
 import json
 import os
+import hashlib
 from datetime import datetime
 
 # Load new jobs from scraping
@@ -115,21 +116,25 @@ def generate_summary(job):
 
     return summary
 
-# Add summary to each new job and create unique IDs
-# New jobs get IDs starting from 0, existing jobs get higher IDs
+# Add summary to each new job and assign deterministic stable IDs
 current_timestamp = datetime.now().isoformat()
 
-for i, job in enumerate(new_jobs):
+def stable_id_for_job(job):
+    # Prefer using the job link to make IDs stable across runs
+    link = job.get('link') or job.get('title') or ''
+    # Use first 8 hex chars of SHA1 to make a numeric id (fits in 32-bit unsigned)
+    h = hashlib.sha1(link.encode('utf-8')).hexdigest()[:8]
+    return int(h, 16)
+
+for job in new_jobs:
     job["summary"] = generate_summary(job)
-    job["id"] = i  # New jobs get IDs 0, 1, 2, etc.
+    job["id"] = stable_id_for_job(job)
     job["is_new"] = True  # Mark as new job
     job["added_at"] = current_timestamp  # Add timestamp
 
-# Update existing job IDs to come after new jobs
-next_id = len(new_jobs)  # Start after new jobs
-for i, job in enumerate(valid_existing_jobs):
-    job["id"] = next_id + i  # Existing jobs get higher IDs
-    # Remove "is_new" flag from existing jobs since they're no longer new
+# Assign stable IDs to existing jobs as well and clean flags
+for job in valid_existing_jobs:
+    job["id"] = stable_id_for_job(job)
     if "is_new" in job:
         del job["is_new"]
 

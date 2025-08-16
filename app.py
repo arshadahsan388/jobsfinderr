@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, abort, url_for, Response, request, redirect
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 import schedule
 import time
@@ -12,6 +12,13 @@ import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__ ,static_folder='static')
+
+# Scheduler run tracking
+last_run_timestamp = None
+
+# Scheduler and status tracking
+app.config['SCHEDULER'] = None
+last_run_timestamp = None
 
 # Force HTTPS and handle www redirects
 @app.before_request
@@ -52,22 +59,81 @@ def add_security_headers(response):
 
 # Initialize scheduler for production
 def start_scheduler():
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(func=run_scripts, trigger="interval", hours=6)
-    scheduler.start()
-    # Shut down the scheduler when exiting the app
-    atexit.register(lambda: scheduler.shutdown())
+    # Avoid starting multiple schedulers during Flask debug reloader
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or os.environ.get('DYNO'):
+        if app.config.get('SCHEDULER'):
+            return
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(func=run_scripts, trigger="interval", hours=6, id='scrape_jobs')
+        scheduler.start()
+        app.config['SCHEDULER'] = scheduler
+        # Shut down the scheduler when exiting the app
+        atexit.register(lambda: scheduler.shutdown())
 
 # Load jobs from JSON file
 def load_jobs():
     with open("jobs_enhanced.json", "r", encoding="utf-8") as file:
-        return json.load(file)
+        jobs = json.load(file)
+
+    # Ensure deterministic added_at for every job so cursor pagination works
+    # If missing, set to a decreasing timestamp based on job id to preserve ordering
+    base_time = datetime.utcnow()
+    for job in jobs:
+        if not job.get('added_at'):
+            # Use job id as offset seconds to create stable timestamp
+            try:
+                offset = int(job.get('id', 0))
+            except Exception:
+                offset = 0
+            # Subtract offset seconds from base_time
+            job['added_at'] = (base_time.replace(microsecond=0) - timedelta(seconds=offset)).isoformat()
+
+    return jobs
 
 @app.route("/")
 def home():
+    # Server-side pagination: support cursor-based (preferred) and page-based (for sitemap/GSC)
     jobs = load_jobs()
 
-    return render_template("index.html", jobs=jobs)
+    # Normalize sort: newest first by added_at if available, fallback to id desc
+    def job_sort_key(j):
+        # Use ISO added_at if present, else far-past placeholder
+        added = j.get('added_at') or ''
+        # We want newest first, so sort by added (descending) then id descending
+        return (added, j.get('id', 0))
+
+    jobs_sorted = sorted(jobs, key=job_sort_key, reverse=True)
+
+    # Pagination parameters
+    PAGE_SIZE = 30
+    page = request.args.get('page', type=int)
+    cursor = request.args.get('cursor')
+
+    total_jobs = len(jobs_sorted)
+
+    # Page-based (legacy / sitemap friendly)
+    if page and page > 0:
+        start = (page - 1) * PAGE_SIZE
+        paginated = jobs_sorted[start:start + PAGE_SIZE]
+        next_page = page + 1 if start + PAGE_SIZE < total_jobs else None
+        prev_page = page - 1 if page > 1 else None
+        return render_template("index.html", jobs=paginated, total_jobs=total_jobs,
+                               page=page, next_page=next_page, prev_page=prev_page)
+
+    # Cursor-based (preferred): cursor is ISO timestamp string representing last seen job added_at
+    if cursor:
+        # Find first job with added_at strictly less than cursor (jobs_sorted is newest->oldest)
+        filtered = [j for j in jobs_sorted if j.get('added_at') and j.get('added_at') < cursor]
+        paginated = filtered[:PAGE_SIZE]
+        next_cursor = paginated[-1].get('added_at') if len(paginated) == PAGE_SIZE else None
+        return render_template("index.html", jobs=paginated, total_jobs=total_jobs,
+                               cursor=cursor, next_cursor=next_cursor)
+
+    # Default: first page via cursor (most recent)
+    paginated = jobs_sorted[:PAGE_SIZE]
+    next_cursor = paginated[-1].get('added_at') if len(paginated) == PAGE_SIZE else None
+    return render_template("index.html", jobs=paginated, total_jobs=total_jobs,
+                           next_cursor=next_cursor)
 
         
 # @app.route("/job/<int:job_id>")
@@ -439,6 +505,19 @@ def sitemap():
     # Load all jobs from enhanced JSON file
     jobs = load_jobs()
 
+    # Add paginated job-list pages to sitemap (page-based pagination)
+    PAGE_SIZE = 30
+    total_jobs = len(jobs)
+    total_pages = (total_jobs + PAGE_SIZE - 1) // PAGE_SIZE
+    # Add root list page (page 1) and subsequent pages explicitly
+    for p in range(1, total_pages + 1):
+        loc = f"{base_url}/" if p == 1 else f"{base_url}/?page={p}"
+        pages.append({
+            "loc": loc,
+            "lastmod": ten_days_ago,
+            "priority": "0.8"
+        })
+
     for job in jobs:
         # Individual job pages - high priority for fresh content
         pages.append({
@@ -458,6 +537,18 @@ def sitemap():
         ET.SubElement(url, 'priority').text = page.get("priority", "0.8")
 
     sitemap_xml = ET.tostring(xml, encoding="utf-8", method="xml")
+
+    # Also write a static sitemap file so you can submit to Google Search Console
+    try:
+        static_dir = os.path.join(app.root_path, 'static')
+        os.makedirs(static_dir, exist_ok=True)
+        with open(os.path.join(static_dir, 'sitemap.xml'), 'wb') as f:
+            f.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
+            f.write(sitemap_xml)
+    except Exception as e:
+        # Log but don't fail sitemap endpoint
+        print(f"⚠️ Failed to write static sitemap.xml: {e}")
+
     response = Response(sitemap_xml, mimetype='application/xml')
     response.headers['Cache-Control'] = 'public, max-age=86400'  # Cache for 1 day
     return response
@@ -810,7 +901,9 @@ def submit_indexnow():
 
 
 def run_scripts():
+    global last_run_timestamp
     print("✅ Running scraping tasks at", datetime.now())
+    last_run_timestamp = datetime.utcnow().isoformat()
     try:
         # Use Python executable from environment for Heroku compatibility
         python_cmd = "python"
@@ -875,6 +968,19 @@ def run_scripts():
         print("❌ Script timeout after 5 minutes")
     except Exception as e:
         print(f"❌ Unexpected error in scraping: {e}")
+        last_run_timestamp = datetime.utcnow().isoformat()
+
+
+@app.route('/scheduler-status')
+def scheduler_status():
+    """Return scheduler running status and last run timestamp"""
+    scheduler = app.config.get('SCHEDULER')
+    status = {
+        'scheduler_running': bool(scheduler and getattr(scheduler, 'running', False)),
+        'last_run_utc': last_run_timestamp,
+    }
+    return jsonify(status)
+    return jsonify(status)
 
 # Initialize scheduler when app starts
 if os.environ.get('DYNO'):  # Only in Heroku production

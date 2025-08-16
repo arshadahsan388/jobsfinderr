@@ -49,8 +49,18 @@
       content="jobs pakistan, government jobs, private jobs, latest jobs, jobs karachi, jobs lahore, jobs islamabad, pakistan jobs 2025, government jobs pakistan, bank jobs, teaching jobs, police jobs, health department jobs"
     />
 
-    <!-- Canonical URL for SEO -->
-    <link rel="canonical" href="https://jobsfinderr.me{{ request.path }}" />
+    <!-- Canonical URL for SEO (page-aware: include only stable `page` param when present) -->
+    {% set _page_param = request.args.get('page') %}
+    {% if _page_param %}
+      {% set _page_num = (_page_param|int) if _page_param is not none else 1 %}
+      {% if _page_num > 1 %}
+        <link rel="prev" href="https://jobsfinderr.me{{ request.path }}?page={{ _page_num - 1 }}" />
+      {% endif %}
+      <link rel="canonical" href="https://jobsfinderr.me{{ request.path }}?page={{ _page_num }}" />
+      <link rel="next" href="https://jobsfinderr.me{{ request.path }}?page={{ _page_num + 1 }}" />
+    {% else %}
+      <link rel="canonical" href="https://jobsfinderr.me{{ request.path }}" />
+    {% endif %}
 
     <!-- Open Graph and Twitter Meta -->
     <meta

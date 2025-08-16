@@ -180,7 +180,7 @@
   <div class="row row-cols-1 row-cols-md-3 g-4" id="jobContainer">
     {% for job in jobs %}
     <div class="col job-item" data-job-type="{{ job.details.get('Job Type', 'private').lower() }}" data-department="{{ job.details.get('Department', '') }}" data-deadline="{{ job.details.get('Last Date for Apply', '') }}" data-title="{{ job.title }}">
-      <div class="card h-100 position-relative clickable-card" onclick="navigateToJob('{{ job.id }}')">
+      <div class="card h-100 position-relative clickable-card">
         <div class="card-body">
           <!-- Job Type Badge inside card body - Only show if Job Type exists -->
           {% if job.details.get('Job Type') %}
@@ -218,11 +218,13 @@
           </div>
 
           <a
-            href="{{ url_for('job_detail', job_id=job.id) }}"
-            class="btn btn-primary mt-3"
+            href="{{ url_for('job_detail', job_id=job.id, _external=True) }}"
+            class="btn btn-primary mt-3 job-detail-link"
             onclick="event.stopPropagation(); saveScrollPosition(); trackApplyClick(this, '{{ job.id }}');"
             >Apply Now <i>→</i></a
-          >
+          
+          <!-- Make entire card clickable but preserve real href for crawlers -->
+          <a href="{{ url_for('job_detail', job_id=job.id, _external=True) }}" class="stretched-link" onclick="saveScrollPosition();" aria-hidden="true"></a>
           
           {% if job.get('is_new') and job.get('added_at') %}
           <div class="time-badge mt-2" data-timestamp="{{ job.get('added_at') }}">
@@ -238,6 +240,27 @@
 <div class="text-center my-4">
   <img src="{{ url_for('static', filename='banner.png') }}" alt="JobsFinderr Banner" class="img-fluid rounded shadow" />
 </div>
+  <!-- Server-side pagination controls -->
+  <div class="container mb-5">
+    <div class="row">
+      <div class="col text-center">
+        {% if page and prev_page %}
+          <a class="btn btn-outline-secondary me-2" href="/?page={{ prev_page }}">← Prev</a>
+        {% endif %}
+
+        {% if page and next_page %}
+          <a class="btn btn-primary" href="/?page={{ next_page }}">Next →</a>
+        {% endif %}
+
+        {% if next_cursor and not page %}
+          <form method="get" style="display:inline">
+            <input type="hidden" name="cursor" value="{{ next_cursor }}" />
+            <button type="submit" class="btn btn-primary">Load more</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 <script>
   function toggleDarkMode() {
     const wasDark = document.body.classList.contains("dark-mode");
