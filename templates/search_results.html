@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Search Jobs in Pakistan - Find Your Perfect Career | JobsFindeRR{% endblock %}
+
+{% block meta %}
+{% set meta_title = "Search Jobs in Pakistan - Find Your Perfect Career | JobsFindeRR" %}
+{% set meta_description = "Search thousands of jobs in Pakistan. Filter by location, department, salary and more. Find government and private sector positions that match your skills." %}
+{% set meta_keywords = "search jobs pakistan, job finder, career search, government jobs search, private jobs search" %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="page-header mb-4">
+        <h1 class="h2 text-primary">Search Jobs in Pakistan</h1>
+        <p class="lead text-muted">Find the perfect job that matches your skills and preferences</p>
+      </div>
+      
+      <!-- Breadcrumb for SEO -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Search Jobs</li>
+        </ol>
+      </nav>
+      
+      <!-- Search Form -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <form method="GET" action="{{ url_for('search_jobs') }}">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="q" class="form-label">Job Title or Keywords</label>
+                <input type="text" class="form-control" id="q" name="q" value="{{ query }}" placeholder="e.g. Teacher, Engineer, Clerk">
+              </div>
+              <div class="col-md-3">
+                <label for="location" class="form-label">Location</label>
+                <select class="form-select" id="location" name="location">
+                  <option value="">All Pakistan</option>
+                  <option value="Karachi" {% if location == 'Karachi' %}selected{% endif %}>Karachi</option>
+                  <option value="Lahore" {% if location == 'Lahore' %}selected{% endif %}>Lahore</option>
+                  <option value="Islamabad" {% if location == 'Islamabad' %}selected{% endif %}>Islamabad</option>
+                  <option value="Rawalpindi" {% if location == 'Rawalpindi' %}selected{% endif %}>Rawalpindi</option>
+                  <option value="Peshawar" {% if location == 'Peshawar' %}selected{% endif %}>Peshawar</option>
+                  <option value="Quetta" {% if location == 'Quetta' %}selected{% endif %}>Quetta</option>
+                  <option value="Multan" {% if location == 'Multan' %}selected{% endif %}>Multan</option>
+                  <option value="Faisalabad" {% if location == 'Faisalabad' %}selected{% endif %}>Faisalabad</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="department" class="form-label">Department/Sector</label>
+                <select class="form-select" id="department" name="department">
+                  <option value="">All Departments</option>
+                  <option value="Education" {% if department == 'Education' %}selected{% endif %}>Education</option>
+                  <option value="Health" {% if department == 'Health' %}selected{% endif %}>Health</option>
+                  <option value="Police" {% if department == 'Police' %}selected{% endif %}>Police</option>
+                  <option value="Revenue" {% if department == 'Revenue' %}selected{% endif %}>Revenue</option>
+                  <option value="IT" {% if department == 'IT' %}selected{% endif %}>Information Technology</option>
+                  <option value="Banking" {% if department == 'Banking' %}selected{% endif %}>Banking</option>
+                  <option value="Engineering" {% if department == 'Engineering' %}selected{% endif %}>Engineering</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                  <i class="bi bi-search"></i> Search
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      {% if query or location or department %}
+      <!-- Search Results -->
+      <div class="mb-4">
+        <h3>Search Results</h3>
+        <p class="text-muted">
+          Found {{ results|length }} jobs 
+          {% if query %}for "{{ query }}"{% endif %}
+          {% if location %}in {{ location }}{% endif %}
+          {% if department %}in {{ department }} department{% endif %}
+        </p>
+      </div>
+      
+      {% if results %}
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for job in results %}
+        <div class="col">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">
+                <a href="{{ url_for('job_detail_slug', slug=create_job_slug(job)) }}" class="text-decoration-none">
+                  {{ job.title }}
+                </a>
+              </h5>
+              
+              {% if job.images and job.images[0] %}
+              <img src="{{ job.images[0] }}" alt="{{ job.title }}" class="img-fluid rounded mb-3" style="max-height: 200px; object-fit: cover;">
+              {% endif %}
+              
+              <div class="job-details">
+                <p class="text-muted mb-2">
+                  <i class="bi bi-building"></i> {{ job.details.get('Department', 'N/A') }}
+                </p>
+                <p class="text-muted mb-2">
+                  <i class="bi bi-geo-alt"></i> {{ job.details.get('Location', 'Pakistan') }}
+                </p>
+                <p class="text-muted mb-2">
+                  <i class="bi bi-calendar"></i> {{ job.details.get('Last Date for Apply', 'Check details') }}
+                </p>
+                <p class="text-muted mb-3">
+                  <i class="bi bi-currency-dollar"></i> {{ job.details.get('Salary', 'As per rules') }}
+                </p>
+              </div>
+              
+              <a href="{{ url_for('job_detail_slug', slug=create_job_slug(job)) }}" class="btn btn-primary">
+                View Details & Apply
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="alert alert-warning text-center">
+        <h4>No jobs found</h4>
+        <p>Try adjusting your search criteria or browse all available jobs.</p>
+        <a href="{{ url_for('home') }}" class="btn btn-primary">Browse All Jobs</a>
+      </div>
+      {% endif %}
+      
+      {% else %}
+      <!-- Popular Search Suggestions -->
+      <div class="row">
+        <div class="col-12">
+          <h3>Popular Job Searches</h3>
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">By Location</h5>
+                  <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('search_jobs', location='Karachi') }}" class="btn btn-outline-primary btn-sm">Karachi Jobs</a>
+                    <a href="{{ url_for('search_jobs', location='Lahore') }}" class="btn btn-outline-primary btn-sm">Lahore Jobs</a>
+                    <a href="{{ url_for('search_jobs', location='Islamabad') }}" class="btn btn-outline-primary btn-sm">Islamabad Jobs</a>
+                    <a href="{{ url_for('search_jobs', location='Peshawar') }}" class="btn btn-outline-primary btn-sm">Peshawar Jobs</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">By Department</h5>
+                  <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('search_jobs', department='Education') }}" class="btn btn-outline-secondary btn-sm">Education Jobs</a>
+                    <a href="{{ url_for('search_jobs', department='Health') }}" class="btn btn-outline-secondary btn-sm">Health Jobs</a>
+                    <a href="{{ url_for('search_jobs', department='Police') }}" class="btn btn-outline-secondary btn-sm">Police Jobs</a>
+                    <a href="{{ url_for('search_jobs', department='IT') }}" class="btn btn-outline-secondary btn-sm">IT Jobs</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- SEO Content -->
+      <div class="mt-5">
+        <div class="card">
+          <div class="card-body">
+            <h4>Find Your Dream Job in Pakistan</h4>
+            <p>JobsFindeRR is Pakistan's leading job portal, connecting talented professionals with top employers across the country. Whether you're looking for government jobs, private sector opportunities, or freelance work, our comprehensive job search platform has thousands of verified positions waiting for you.</p>
+            
+            <div class="row mt-4">
+              <div class="col-md-4">
+                <h6>Government Jobs</h6>
+                <p class="small text-muted">Federal, provincial, and local government positions in education, health, administration, and more.</p>
+              </div>
+              <div class="col-md-4">
+                <h6>Private Sector</h6>
+                <p class="small text-muted">Corporate opportunities in banking, IT, engineering, marketing, and other industries.</p>
+              </div>
+              <div class="col-md-4">
+                <h6>Fresh Graduates</h6>
+                <p class="small text-muted">Entry-level positions and internships perfect for new graduates starting their careers.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

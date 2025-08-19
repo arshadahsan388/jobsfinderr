@@ -218,13 +218,13 @@
           </div>
 
           <a
-            href="{{ url_for('job_detail', job_id=job.id, _external=True) }}"
+            href="{{ url_for('job_detail_slug', slug=create_job_slug(job), _external=True) }}"
             class="btn btn-primary mt-3 job-detail-link"
-            onclick="event.stopPropagation(); saveScrollPosition(); trackApplyClick(this, '{{ job.id }}');"
+            onclick="event.stopPropagation(); saveScrollPosition(); trackApplyClick(this, '{{ create_job_slug(job) }}');"
             >Apply Now <i>→</i></a
           
           <!-- Make entire card clickable but preserve real href for crawlers -->
-          <a href="{{ url_for('job_detail', job_id=job.id, _external=True) }}" class="stretched-link" onclick="saveScrollPosition();" aria-hidden="true"></a>
+          <a href="{{ url_for('job_detail_slug', slug=create_job_slug(job), _external=True) }}" class="stretched-link" onclick="saveScrollPosition();" aria-hidden="true"></a>
           
           {% if job.get('is_new') and job.get('added_at') %}
           <div class="time-badge mt-2" data-timestamp="{{ job.get('added_at') }}">
@@ -426,25 +426,6 @@
   // Save scroll position when clicking on job
   function saveScrollPosition() {
     localStorage.setItem('jobsScrollPosition', window.scrollY);
-  }
-
-  // Navigate to job detail when card is clicked
-  function navigateToJob(jobId) {
-    // Get job details for tracking
-    const jobCard = document.querySelector(`[onclick="navigateToJob('${jobId}')"]`);
-    if (jobCard) {
-      const jobTitle = jobCard.querySelector('.title')?.textContent || 'Unknown Job';
-      const jobTypeElement = jobCard.closest('.job-item');
-      const jobType = jobTypeElement?.getAttribute('data-job-type') || 'unknown';
-      
-      // Track job view in GA4
-      if (typeof trackJobView === 'function') {
-        trackJobView(jobId, jobTitle, jobType);
-      }
-    }
-    
-    saveScrollPosition();
-    window.location.href = `/job/${jobId}`;
   }
 
   // Calculate time ago from timestamp

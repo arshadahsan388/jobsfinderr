@@ -10,6 +10,7 @@ import subprocess
 
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
+from helpers import create_job_slug
 
 app = Flask(__name__ ,static_folder='static')
 
@@ -118,7 +119,8 @@ def home():
         next_page = page + 1 if start + PAGE_SIZE < total_jobs else None
         prev_page = page - 1 if page > 1 else None
         return render_template("index.html", jobs=paginated, total_jobs=total_jobs,
-                               page=page, next_page=next_page, prev_page=prev_page)
+                               page=page, next_page=next_page, prev_page=prev_page, 
+                               create_job_slug=create_job_slug)
 
     # Cursor-based (preferred): cursor is ISO timestamp string representing last seen job added_at
     if cursor:
@@ -127,13 +129,14 @@ def home():
         paginated = filtered[:PAGE_SIZE]
         next_cursor = paginated[-1].get('added_at') if len(paginated) == PAGE_SIZE else None
         return render_template("index.html", jobs=paginated, total_jobs=total_jobs,
-                               cursor=cursor, next_cursor=next_cursor)
+                               cursor=cursor, next_cursor=next_cursor,
+                               create_job_slug=create_job_slug)
 
     # Default: first page via cursor (most recent)
     paginated = jobs_sorted[:PAGE_SIZE]
     next_cursor = paginated[-1].get('added_at') if len(paginated) == PAGE_SIZE else None
     return render_template("index.html", jobs=paginated, total_jobs=total_jobs,
-                           next_cursor=next_cursor)
+                           next_cursor=next_cursor, create_job_slug=create_job_slug)
 
         
 # @app.route("/job/<int:job_id>")
@@ -153,16 +156,92 @@ def home():
 
 #     return render_template("job_detail.html", job=job)
 
-@app.route("/job/<int:job_id>")
-def job_detail(job_id):
-    with open("jobs_enhanced.json", "r", encoding="utf-8") as f:
-        jobs = json.load(f)
+# Helper function to create stable URL slugs
+# (Moved to helpers.py)
 
+# New stable slug-based route (preferred)
+@app.route("/job/<slug>")
+def job_detail_slug(slug):
+    jobs = load_jobs()
+    
+    # Find job by matching slug
+    for job in jobs:
+        if create_job_slug(job) == slug:
+            return render_template("job_detail.html", job=job)
+    
+    # If not found, try to find by old numeric ID if slug looks like number
+    if slug.isdigit():
+        return redirect(url_for('job_detail_legacy', job_id=int(slug)), code=301)
+    
+    abort(404)
+
+# Legacy numeric ID route (for old indexed URLs)
+@app.route("/job/<int:job_id>")
+def job_detail_legacy(job_id):
+    jobs = load_jobs()
+    
     job = next((j for j in jobs if j.get("id") == job_id), None)
     if not job:
+        # Try to find a similar job and suggest redirect
+        if jobs:
+            # Redirect to newest job's slug URL
+            newest_job = max(jobs, key=lambda x: x.get('added_at', ''))
+            return redirect(url_for('job_detail_slug', slug=create_job_slug(newest_job)), code=301)
         abort(404)
+    
+    # Redirect to stable slug URL
+    return redirect(url_for('job_detail_slug', slug=create_job_slug(job)), code=301)
 
-    return render_template("job_detail.html", job=job)
+# Custom 404 error handler
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
+# Custom 500 error handler  
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('500.html'), 500
+
+# Add URL redirects for common old patterns to improve SEO
+@app.route('/job/<int:old_id>/redirect')
+def redirect_old_job_url(old_id):
+    """Redirect old numeric job URLs to new slug URLs"""
+    jobs = load_jobs()
+    job = next((j for j in jobs if j.get("id") == old_id), None)
+    if job:
+        return redirect(url_for('job_detail_slug', slug=create_job_slug(job)), code=301)
+    return redirect(url_for('home'), code=301)
+
+# Latest jobs endpoint for better crawling
+@app.route('/latest-jobs')
+def latest_jobs():
+    """Show latest jobs with proper meta tags for SEO"""
+    jobs = load_jobs()
+    latest = sorted(jobs, key=lambda x: x.get('added_at', ''), reverse=True)[:50]
+    return render_template('latest_jobs.html', jobs=latest, create_job_slug=create_job_slug)
+
+# Job search endpoint
+@app.route('/search')
+def search_jobs():
+    """Search jobs with SEO-friendly URLs"""
+    query = request.args.get('q', '')
+    jobs = load_jobs()
+    
+    if query:
+        filtered_jobs = []
+        query_lower = query.lower()
+        for job in jobs:
+            if (query_lower in job.get('title', '').lower() or 
+                query_lower in job.get('details', {}).get('Department', '').lower() or
+                query_lower in job.get('details', {}).get('Location', '').lower()):
+                filtered_jobs.append(job)
+        
+        return render_template('search_results.html', 
+                             jobs=filtered_jobs, 
+                             query=query,
+                             create_job_slug=create_job_slug)
+    
+    return redirect(url_for('home'))
 
 @app.route("/about")
 def about():
@@ -520,8 +599,10 @@ def sitemap():
 
     for job in jobs:
         # Individual job pages - high priority for fresh content
+        # Use stable slug URLs instead of numeric IDs
+        job_slug = create_job_slug(job)
         pages.append({
-            "loc": f"{base_url}/job/{job['id']}",
+            "loc": f"{base_url}/job/{job_slug}",
             "lastmod": ten_days_ago,
             "priority": "0.9"
         })
@@ -673,8 +754,9 @@ def rss_feed():
             
             # Required RSS elements
             ET.SubElement(item, 'title').text = job_title
-            ET.SubElement(item, 'link').text = f"{base_url}/job/{job_id}"
-            ET.SubElement(item, 'guid').text = f"{base_url}/job/{job_id}"
+            job_slug = create_job_slug(job)
+            ET.SubElement(item, 'link').text = f"{base_url}/job/{job_slug}"
+            ET.SubElement(item, 'guid').text = f"{base_url}/job/{job_slug}"
             
             # Description with job details
             description = f"""
@@ -687,7 +769,7 @@ def rss_feed():
             <p><strong>Experience:</strong> {job_details.get('Experience', 'Fresh/Experienced')}</p>
             <p><strong>Last Date:</strong> {job_details.get('Last Date for Apply', 'Check details')}</p>
             <p><strong>Job Type:</strong> {job_details.get('Job Type', 'Government')}</p>
-            <p><a href="{base_url}/job/{job_id}">View Full Details &amp; Apply</a></p>
+            <p><a href="{base_url}/job/{create_job_slug(job)}">View Full Details &amp; Apply</a></p>
             ]]>
             """
             ET.SubElement(item, 'description').text = description
@@ -769,15 +851,16 @@ def json_feed():
             
             content_html += f"""
             </ol>
-            <p><a href="{base_url}/job/{job_id}">Apply Now - View Full Details</a></p>
+            <p><a href="{base_url}/job/{create_job_slug(job)}">Apply Now - View Full Details</a></p>
             """
             
             # Create summary text without HTML
             summary = f"{job_title} - {job_details.get('Department', 'Government Department')} in {job_details.get('Location', 'Pakistan')}. Salary: {job_details.get('Salary', 'Competitive')}. Last date: {job_details.get('Last Date for Apply', 'Check details')}."
             
+            job_slug = create_job_slug(job)
             item = {
-                "id": f"{base_url}/job/{job_id}",
-                "url": f"{base_url}/job/{job_id}",
+                "id": f"{base_url}/job/{job_slug}",
+                "url": f"{base_url}/job/{job_slug}",
                 "title": job_title,
                 "content_html": content_html,
                 "summary": summary,
@@ -854,10 +937,12 @@ def api_jobs():
         }
         
         for job in paginated_jobs:
+            job_slug = create_job_slug(job)
             job_data = {
                 "id": job.get('id'),
+                "slug": job_slug,
                 "title": job.get('title'),
-                "url": f"https://jobsfinderr.me/job/{job.get('id')}",
+                "url": f"https://jobsfinderr.me/job/{job_slug}",
                 "details": job.get('details', {}),
                 "instructions": job.get('instructions', []),
                 "application_url": job.get('application_form', ''),

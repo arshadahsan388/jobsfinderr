@@ -6,6 +6,7 @@ import json
 import os
 from datetime import datetime
 import urllib.parse
+from helpers import create_job_slug
 
 class FacebookPoster:
     def __init__(self):
@@ -66,7 +67,7 @@ class FacebookPoster:
 📅 Last Date: {job.get('details', {}).get('Last Date for Apply', 'Not specified')}
 ⚡ Job Type: {job_type}
 
-🔗 Apply Now: https://jobsfinderr.me/job/{job.get('id')}
+🔗 Apply Now: https://jobsfinderr.me/job/{create_job_slug(job)}
 
 Share this opportunity with your friends! 👥
 
@@ -109,7 +110,7 @@ def send_facebook_job_notification(job):
     
     # Format message
     message = facebook.format_job_for_facebook(job)
-    job_link = f"https://jobsfinderr.me/job/{job.get('id')}"
+    job_link = f"https://jobsfinderr.me/job/{create_job_slug(job)}"
     
     # Post to Facebook
     success = facebook.post_to_page(message, job_link)

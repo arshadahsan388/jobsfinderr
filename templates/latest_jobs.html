@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Latest Jobs in Pakistan 2025 - Fresh Opportunities | JobsFindeRR{% endblock %}
+
+{% block meta %}
+{% set meta_title = "Latest Jobs in Pakistan 2025 - Fresh Opportunities | JobsFindeRR" %}
+{% set meta_description = "Browse the freshest job opportunities in Pakistan. New government and private sector positions added daily. Apply online for latest vacancies." %}
+{% set meta_keywords = "latest jobs pakistan, fresh jobs, new jobs today, recent vacancies, government jobs, private jobs" %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="page-header mb-4">
+        <h1 class="h2 text-primary">Latest Jobs in Pakistan 2025</h1>
+        <p class="lead text-muted">Fresh opportunities added daily. Don't miss out on your dream job!</p>
+      </div>
+      
+      <!-- Breadcrumb for SEO -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Latest Jobs</li>
+        </ol>
+      </nav>
+      
+      <!-- Job Stats -->
+      <div class="alert alert-info mb-4">
+        <strong>{{ jobs|length }} fresh jobs</strong> available right now! Updated every 6 hours.
+      </div>
+      
+      <!-- Job Cards -->
+      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for job in jobs %}
+        <div class="col">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">
+                <a href="{{ url_for('job_detail_slug', slug=create_job_slug(job)) }}" class="text-decoration-none">
+                  {{ job.title }}
+                </a>
+              </h5>
+              
+              {% if job.images and job.images[0] %}
+              <img src="{{ job.images[0] }}" alt="{{ job.title }}" class="img-fluid rounded mb-3" style="max-height: 200px; object-fit: cover;">
+              {% endif %}
+              
+              <div class="job-details">
+                <p class="text-muted mb-2">
+                  <i class="bi bi-building"></i> {{ job.details.get('Department', 'N/A') }}
+                </p>
+                <p class="text-muted mb-2">
+                  <i class="bi bi-geo-alt"></i> {{ job.details.get('Location', 'Pakistan') }}
+                </p>
+                <p class="text-muted mb-2">
+                  <i class="bi bi-calendar"></i> {{ job.details.get('Last Date for Apply', 'Check details') }}
+                </p>
+                <p class="text-muted mb-3">
+                  <i class="bi bi-currency-dollar"></i> {{ job.details.get('Salary', 'As per rules') }}
+                </p>
+              </div>
+              
+              <a href="{{ url_for('job_detail_slug', slug=create_job_slug(job)) }}" class="btn btn-primary">
+                View Details & Apply
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      
+      <!-- CTA Section -->
+      <div class="text-center mt-5 mb-4">
+        <h3>Looking for specific jobs?</h3>
+        <p class="text-muted">Browse by category or location</p>
+        <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+          <a href="{{ url_for('government_jobs') }}" class="btn btn-outline-primary">Government Jobs</a>
+          <a href="{{ url_for('private_jobs') }}" class="btn btn-outline-secondary">Private Jobs</a>
+          <a href="{{ url_for('city_jobs', city='karachi') }}" class="btn btn-outline-info">Karachi Jobs</a>
+          <a href="{{ url_for('city_jobs', city='lahore') }}" class="btn btn-outline-success">Lahore Jobs</a>
+          <a href="{{ url_for('city_jobs', city='islamabad') }}" class="btn btn-outline-warning">Islamabad Jobs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

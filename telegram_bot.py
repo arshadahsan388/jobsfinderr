@@ -4,6 +4,7 @@ import requests
 import json
 import os
 from datetime import datetime
+from helpers import create_job_slug
 
 class TelegramBot:
     def __init__(self):
@@ -61,7 +62,7 @@ class TelegramBot:
 📅 *Last Date:* {job.get('details', {}).get('Last Date for Apply', 'Not specified')}
 ⚡ *Job Type:* {job_type}
 
-🔗 [Apply Here](https://jobsfinderr.me/job/{job.get('id')})
+🔗 [Apply Here](https://jobsfinderr.me/job/{self._get_job_slug(job)})
 
 #JobAlert #PakistanJobs #{job_type}Jobs
         
@@ -70,6 +71,10 @@ class TelegramBot:
 📋 Copy & Paste for WhatsApp Groups"""
         
         return message
+    
+    def _get_job_slug(self, job):
+        """Get job slug for URL"""
+        return create_job_slug(job)
     
     def _encode_whatsapp_message(self, job):
         """Create WhatsApp share text"""
@@ -89,7 +94,7 @@ class TelegramBot:
 📅 *Last Date:* {job.get('details', {}).get('Last Date for Apply', 'Not specified')}
 ⚡ *Job Type:* {job_type}
 
-Apply here: https://jobsfinderr.me/job/{job.get('id')}
+Apply here: https://jobsfinderr.me/job/{create_job_slug(job)}
 
 #JobAlert #PakistanJobs #{job_type}Jobs"""
         
