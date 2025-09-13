@@ -243,6 +243,11 @@ def search_jobs():
     
     return redirect(url_for('home'))
 
+@app.route("/callback")
+def tiktok_callback():
+    """TikTok Shop API callback endpoint for authorization"""
+    return render_template('callback.html')
+
 @app.route("/about")
 def about():
     return render_template("About.html")

@@ -1,14 +1,8 @@
-{% extends "base.html" %}
-
-{% block title %}Page Not Found - JobsFindeRR{% endblock %}
-
-{% block meta %}
-{% set meta_title = "Page Not Found - JobsFindeRR" %}
-{% set meta_description = "The page you are looking for could not be found. Browse latest jobs in Pakistan." %}
-{% set meta_keywords = "404, page not found, jobs pakistan, latest jobs" %}
-{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Page Not Found - JobsFindeRR{%
+endblock %} {% block meta %} {% set meta_title = "Page Not Found - JobsFindeRR"
+%} {% set meta_description = "The page you are looking for could not be found.
+Browse latest jobs in Pakistan." %} {% set meta_keywords = "404, page not found,
+jobs pakistan, latest jobs" %} {% endblock %} {% block content %}
 <div class="container mt-5">
   <div class="row justify-content-center">
     <div class="col-md-8 text-center">
@@ -16,31 +10,56 @@
         <h1 class="display-1 text-primary">404</h1>
         <h2 class="mb-4">Job Not Found</h2>
         <p class="lead mb-4">
-          The job you're looking for might have been removed, had its link changed, or the application deadline has passed.
+          The job you're looking for might have been removed, had its link
+          changed, or the application deadline has passed.
         </p>
-        
+
         <div class="mb-4">
           <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg me-3">
             <i class="bi bi-house-door"></i> Browse All Jobs
           </a>
-          <a href="{{ url_for('government_jobs') }}" class="btn btn-outline-primary btn-lg">
+          <a
+            href="{{ url_for('government_jobs') }}"
+            class="btn btn-outline-primary btn-lg"
+          >
             <i class="bi bi-building"></i> Government Jobs
           </a>
         </div>
-        
+
         <div class="alert alert-info">
-          <strong>Looking for something specific?</strong><br>
-          Try searching for jobs by department, city, or position type using our homepage search.
+          <strong>Looking for something specific?</strong><br />
+          Try searching for jobs by department, city, or position type using our
+          homepage search.
         </div>
-        
+
         <div class="mt-4">
           <h5>Popular Categories:</h5>
           <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
-            <a href="{{ url_for('government_jobs') }}" class="badge bg-light text-dark border">Government Jobs</a>
-            <a href="{{ url_for('private_jobs') }}" class="badge bg-light text-dark border">Private Jobs</a>
-            <a href="{{ url_for('city_jobs', city='karachi') }}" class="badge bg-light text-dark border">Karachi Jobs</a>
-            <a href="{{ url_for('city_jobs', city='lahore') }}" class="badge bg-light text-dark border">Lahore Jobs</a>
-            <a href="{{ url_for('city_jobs', city='islamabad') }}" class="badge bg-light text-dark border">Islamabad Jobs</a>
+            <a
+              href="{{ url_for('government_jobs') }}"
+              class="badge bg-light text-dark border"
+              >Government Jobs</a
+            >
+            <a
+              href="{{ url_for('private_jobs') }}"
+              class="badge bg-light text-dark border"
+              >Private Jobs</a
+            >
+            <a
+              href="{{ url_for('city_jobs', city='karachi') }}"
+              class="badge bg-light text-dark border"
+              >Karachi Jobs</a
+            >
+            <a
+              href="{{ url_for('city_jobs', city='lahore') }}"
+              class="badge bg-light text-dark border"
+              >Lahore Jobs</a
+            >
+            <a
+              href="{{ url_for('city_jobs', city='islamabad') }}"
+              class="badge bg-light text-dark border"
+              >Islamabad Jobs</a
+            >
           </div>
         </div>
       </div>
@@ -49,21 +68,21 @@
 </div>
 
 <style>
-.error-page {
-  padding: 3rem 1rem;
-}
-
-.display-1 {
-  font-size: 8rem;
-  font-weight: bold;
-  opacity: 0.1;
-  line-height: 1;
-}
-
-@media (max-width: 768px) {
-  .display-1 {
-    font-size: 5rem;
+  .error-page {
+    padding: 3rem 1rem;
   }
-}
+
+  .display-1 {
+    font-size: 8rem;
+    font-weight: bold;
+    opacity: 0.1;
+    line-height: 1;
+  }
+
+  @media (max-width: 768px) {
+    .display-1 {
+      font-size: 5rem;
+    }
+  }
 </style>
 {% endblock %}
